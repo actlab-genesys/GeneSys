@@ -2,7 +2,6 @@
 
     bit [31:0] instruction_base_addr    = 32'd67108864;
 
-
 `ifdef RESNET50_GEMM
  
     bit [31:0] num_instruction_bytes               = 32'd880; // num_instr * 4
@@ -23,18 +22,18 @@
     integer config_weight_tile_size_32B_cnt        = 32768;
     integer config_output_tile_size_32B_cnt        = 256;
 
-    integer instr_filep   = $fopen("verif/systolic_array/resnet50_gemm/fpga_fixed12_constrained_gemm_decimal.txt","r"); 
-    integer instr_filep1  = $fopen("verif/systolic_array/resnet50_gemm/fpga_fixed12_constrained_gemm_decimal.txt","r"); 
+    integer instr_filep   = $fopen("verif/systolic_array/resnet50_gemm/fpga_8x8_tile4_case0_gemm_decimal.txt.txt","r"); 
+    integer instr_filep1  = $fopen("verif/systolic_array/resnet50_gemm/fpga_8x8_tile4_case0_gemm_decimal.txt.txt","r"); 
 
-    integer output_filep  = $fopen("verif/systolic_array/resnet50_gemm/output.txt","r");
-    integer output_filep1 = $fopen("verif/systolic_array/resnet50_gemm/output.txt","r");
-    integer output_filep2 = $fopen("verif/systolic_array/resnet50_gemm/output.txt","r");
+    integer output_filep  = $fopen("verif/systolic_array/resnet50_gemm/out.txt","r");
+    integer output_filep1 = $fopen("verif/systolic_array/resnet50_gemm/out.txt","r");
+    integer output_filep2 = $fopen("verif/systolic_array/resnet50_gemm/out.txt","r");
 
-    integer input_filep   = $fopen("verif/systolic_array/resnet50_gemm/input_shuffled.txt","r");
-    integer input_filep1  = $fopen("verif/systolic_array/resnet50_gemm/input_shuffled.txt","r");
+    integer input_filep   = $fopen("verif/systolic_array/resnet50_gemm/data_shuffled.txt","r");
+    integer input_filep1  = $fopen("verif/systolic_array/resnet50_gemm/data_shuffled.txt","r");
 
-    integer params_filep  = $fopen("verif/systolic_array/resnet50_gemm/weights_shuffled.txt","r"); 
-    integer params_filep1 = $fopen("verif/systolic_array/resnet50_gemm/weights_shuffled.txt","r"); 
+    integer params_filep  = $fopen("verif/systolic_array/resnet50_gemm/weight_shuffled.txt","r"); 
+    integer params_filep1 = $fopen("verif/systolic_array/resnet50_gemm/weight_shuffled.txt","r"); 
 
     integer bias_filep    = $fopen("verif/systolic_array/resnet50_gemm/bias.txt","r"); 
     integer bias_filep1   = $fopen("verif/systolic_array/resnet50_gemm/bias.txt","r"); 
@@ -60,18 +59,18 @@
     integer config_weight_tile_size_32B_cnt        = 32768;
     integer config_output_tile_size_32B_cnt        = 256;
 
-    integer instr_filep   = $fopen("verif/systolic_array/resnet50_conv/pixel_skip_conv_decimal.txt","r"); 
-    integer instr_filep1  = $fopen("verif/systolic_array/resnet50_conv/pixel_skip_conv_decimal.txt","r"); 
+    integer instr_filep   = $fopen("verif/systolic_array/resnet50_conv/fpga_8x8_tile3_case0_oc_oh_ow_conv_decimal.txt.txt","r"); 
+    integer instr_filep1  = $fopen("verif/systolic_array/resnet50_conv/fpga_8x8_tile3_case0_oc_oh_ow_conv_decimal.txt.txt","r"); 
 
-    integer output_filep  = $fopen("verif/systolic_array/resnet50_conv/output.txt","r");
-    integer output_filep1 = $fopen("verif/systolic_array/resnet50_conv/output.txt","r");
-    integer output_filep2 = $fopen("verif/systolic_array/resnet50_conv/output.txt","r");
+    integer output_filep  = $fopen("verif/systolic_array/resnet50_conv/out.txt","r");
+    integer output_filep1 = $fopen("verif/systolic_array/resnet50_conv/out.txt","r");
+    integer output_filep2 = $fopen("verif/systolic_array/resnet50_conv/out.txt","r");
 
-    integer input_filep   = $fopen("verif/systolic_array/resnet50_conv/input_shuffled.txt","r");
-    integer input_filep1  = $fopen("verif/systolic_array/resnet50_conv/input_shuffled.txt","r");
+    integer input_filep   = $fopen("verif/systolic_array/resnet50_conv/data_shuffled.txt","r");
+    integer input_filep1  = $fopen("verif/systolic_array/resnet50_conv/data_shuffled.txt","r");
 
-    integer params_filep  = $fopen("verif/systolic_array/resnet50_conv/weights_shuffled.txt","r"); 
-    integer params_filep1 = $fopen("verif/systolic_array/resnet50_conv/weights_shuffled.txt","r"); 
+    integer params_filep  = $fopen("verif/systolic_array/resnet50_conv/weight_shuffled.txt","r"); 
+    integer params_filep1 = $fopen("verif/systolic_array/resnet50_conv/weight_shuffled.txt","r"); 
 
     integer bias_filep    = $fopen("verif/systolic_array/resnet50_conv/bias.txt","r"); 
     integer bias_filep1   = $fopen("verif/systolic_array/resnet50_conv/bias.txt","r"); 

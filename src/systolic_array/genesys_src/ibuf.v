@@ -19,7 +19,7 @@ module ibuf
     
     input  wire  [ NUM_BANKS                -1 : 0 ]    bs_read_req,
     input  wire  [ NUM_BANKS*READ_ADDR_WIDTH     -1 : 0 ]    bs_read_addr,
-    output wire  [ DDR_BANDWIDTH            -1 : 0 ]    bs_read_data,
+    output wire  [ READ_WIDTH*NUM_BANKS    -1 : 0 ]    bs_read_data,
     
     input  wire  [ NUM_BANKS                -1 : 0 ]    bs_write_req,
     input  wire  [ NUM_BANKS*WRITE_ADDR_WIDTH     -1 : 0 ]    bs_write_addr,
@@ -56,7 +56,7 @@ module ibuf
              
                 assign _write_req = bs_write_req[n];
                 assign _write_addr = bs_write_addr[((n+1) * WRITE_ADDR_WIDTH) - 1 : n*WRITE_ADDR_WIDTH];
-                assign _write_data = bs_write_data[((n+1) * WRITE_WIDTH) - 1 : n*WRITE_WIDTH];
+                assign _write_data = bs_write_data_w[((n+1) * WRITE_WIDTH) - 1 : n*WRITE_WIDTH];
                 assign _write_data_en = bs_write_req[n];
                 
             `ifdef FPGA

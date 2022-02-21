@@ -1,4 +1,4 @@
-`define FPGA
+//`define FPGA
 `timescale 1ns/1ps
 module obuf
 #(
@@ -29,7 +29,7 @@ module obuf
     wire                                         regceb;
 
     assign regceb = 1'b0;
-
+/*
 `ifdef FPGA
     obuf_data_shuffler #(
         .DDR_BANDWIDTH(DDR_BANDWIDTH),
@@ -40,7 +40,7 @@ module obuf
         .data_out(bs_write_data_w)
     );
 `endif
-
+*/
     genvar n;
     generate
         for (n=0; n<NUM_BANKS; n=n+1) begin

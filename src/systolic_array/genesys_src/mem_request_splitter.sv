@@ -129,7 +129,7 @@ module mem_request_splitter #(parameter integer ADDR_WIDTH = 64,
   always @(posedge clk)
   begin
     if (reset)
-      stmem_split_state_d <= SPLIT_REQ_IDLE;
+      stmem_split_state_q <= SPLIT_REQ_IDLE;
     else
       stmem_split_state_q <= stmem_split_state_d;
   end

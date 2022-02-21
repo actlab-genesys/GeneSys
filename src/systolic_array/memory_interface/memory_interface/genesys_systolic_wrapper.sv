@@ -125,6 +125,7 @@ timeprecision 1ps;
 // genesys systolic configuration
 `include "config.vh"
 
+
 ///////////////////////////////////////////////////////////////////////////////
 // Wires and Variables
 ///////////////////////////////////////////////////////////////////////////////
@@ -162,7 +163,11 @@ genesys_top_module #(
     //.WBUF_ADDR_WIDTH              (WBUF_ADDR_WIDTH        ),                                
     //.OBUF_ADDR_WIDTH              (OBUF_ADDR_WIDTH        ),                                
     //.BBUF_ADDR_WIDTH              (BBUF_ADDR_WIDTH        ),                                
-    //.WBUF_REQ_WIDTH               (WBUF_REQ_WIDTH         ),                        
+    //.WBUF_REQ_WIDTH               (WBUF_REQ_WIDTH         ),
+    .OBUF_BANK_DEPTH              (OBUF_DEPTH),
+    .IBUF_BANK_DEPTH              (IBUF_DEPTH), 
+    .WBUF_BANK_DEPTH              (WBUF_DEPTH),
+    .BBUF_BANK_DEPTH              (BBUF_DEPTH),                       
     .INST_DATA_WIDTH              (INST_DATA_WIDTH        ),        
     .INST_MEM_CAPACITY_BITS       (INST_MEM_CAPACITY_BITS ),          
     .INST_MEM_ADDR_WIDTH          (INST_MEM_ADDR_WIDTH    ),      

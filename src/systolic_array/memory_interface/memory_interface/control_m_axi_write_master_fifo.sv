@@ -211,7 +211,7 @@ logic                                     rd_address_valid_flag;
 logic                                     axi_cntr_running;    
 logic                                     data_fifo_prog_empty,data_fifo_empty;
 logic data_underflow, data_wr_ack,  data_overflow, data_prog_full, data_almost_full;
-logic [LP_FIFO_DEPTH : 0] data_wr_data_count, data_rd_data_count;
+logic [LP_FIFO_COUNT_WIDTH-1 : 0] data_wr_data_count, data_rd_data_count;
 // req split logic
 logic split_sm_complete;
 logic split_sm_running;
@@ -227,10 +227,22 @@ end
 //assign pop_request = axi_req_fifo_empty_d == 1'b1 ?  m_axi_awready : awvalid_r ?  axi_req_fifo_read_ready && cur_req_sent && m_axi_awready : 1'b0; 
 
 //assign pop_request = axi_req_fifo_empty_d ? axi_req_fifo_read_ready && m_axi_awready : w_final_transfer ? axi_req_fifo_read_ready && m_axi_awready : 1'b0;  
-assign pop_request_w = (axi_req_fifo_empty_d & ~axi_cntr_running) ? (split_sm_running ?  s_axis_tready && 1'b1 : axi_req_fifo_read_ready && s_axis_tready) : w_final_transfer ? axi_req_fifo_read_ready && s_axis_tready : 1'b0;  
+assign pop_request_w =  (axi_req_fifo_empty_d & ~axi_cntr_running) ? (split_sm_running ?  s_axis_tready && 1'b1 : axi_req_fifo_read_ready && s_axis_tready) : w_final_transfer ? axi_req_fifo_read_ready && s_axis_tready : 1'b0;  
+
+// Rohan: The below register is needed because m_axi_awready is not high someitmes in real FPGA. This can also be found in some seeds of backpressure.
+reg pop_request_w_reg;
+always@(posedge aclk) begin
+  if (areset)
+    pop_request_w_reg <= 0;
+  else begin
+    if (~m_axi_awready)
+      pop_request_w_reg <= pop_request_w;
+  end
+end
+
 
 assign pop_request_fifo = ~split_sm_running ?  pop_request_w : 1'b0;
-assign pop_request_splitter = split_sm_running ?  pop_request_w : 1'b0; 
+assign pop_request_splitter = split_sm_running ? (m_axi_awready ? pop_request_w : pop_request_w_reg) : 1'b0; 
 
 assign rd_address_valid_flag = (awvalid_r || axi_req_fifo_empty) ? 1'b1 : 1'b0;
 
@@ -244,7 +256,7 @@ always @(posedge aclk) begin
   end
 
 // Logic to detect if the controller is running or in idle
-
+ 
 
 always @(posedge aclk ) begin
   if (areset || w_final_transfer)

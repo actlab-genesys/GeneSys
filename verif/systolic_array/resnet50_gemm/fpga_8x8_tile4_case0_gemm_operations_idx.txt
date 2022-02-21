@@ -1,0 +1,63 @@
+// CODELET:	gemm1
+inputs=data['M', 'N'], weight['N', 'P'], bias['P']
+outputs=out['M', 'P']
+0	config0: start-systolic_array
+1	config1: start-WBUF
+2	config2: start-IBUF
+3	config3: start-BBUF
+4	config4: start-OBUF
+5	(P)loop0[0]: START=0; STOP=128; STRIDE=64; OFFSET:0
+6		transfer2: OPERAND: bias[DRAM->BBUF], SIZES: [[128], [64]]
+7		(N)loop1[1]: START=0; STOP=128; STRIDE=128; OFFSET:0
+8			transfer1: OPERAND: weight[DRAM->WBUF], SIZES: [[128, 128], [128, 64]]
+9			(M)loop2[2]: START=0; STOP=1; STRIDE=1; OFFSET:0
+10				transfer3: OPERAND: out[DRAM->OBUF], SIZES: [[1, 128], [1, 64]]
+11				transfer0: OPERAND: data[DRAM->IBUF], SIZES: [[1, 128], [1, 128]]
+12				(P)loop3[3]: START=0; STOP=64; STRIDE=1; OFFSET:0
+13					(N)loop4[4]: START=0; STOP=128; STRIDE=1; OFFSET:0
+14						(M)loop5[5]: START=0; STOP=1; STRIDE=1; OFFSET:0
+15							compute0: pe_array-MVMUL(['data', 'weight', 'bias'])->['out']
+16						loop5: END
+17					loop4: END
+18				loop3: END
+19				transfer4: OPERAND: out[OBUF->DRAM], SIZES: [[1, 64], [1, 128]]
+20			loop2: END
+21		loop1: END
+22	loop0: END
+23	config5: end-WBUF
+24	config6: end-IBUF
+25	config7: end-OBUF
+26	config8: end-BBUF
+27	config9: end-systolic_array
+
+// CODELET:	gemm2
+inputs=data['M', 'N'], weight['N', 'P'], bias['P']
+outputs=out['M', 'P']
+0	config0: start-systolic_array
+1	config1: start-WBUF
+2	config2: start-IBUF
+3	config3: start-BBUF
+4	config4: start-OBUF
+5	(P)loop0[0]: START=0; STOP=128; STRIDE=64; OFFSET:0
+6		transfer2: OPERAND: bias[DRAM->BBUF], SIZES: [[128], [64]]
+7		(N)loop1[1]: START=0; STOP=128; STRIDE=128; OFFSET:0
+8			transfer1: OPERAND: weight[DRAM->WBUF], SIZES: [[128, 128], [128, 64]]
+9			(M)loop2[2]: START=0; STOP=1; STRIDE=1; OFFSET:0
+10				transfer3: OPERAND: out[DRAM->OBUF], SIZES: [[1, 128], [1, 64]]
+11				transfer0: OPERAND: data[DRAM->IBUF], SIZES: [[1, 128], [1, 128]]
+12				(P)loop3[3]: START=0; STOP=64; STRIDE=1; OFFSET:0
+13					(N)loop4[4]: START=0; STOP=128; STRIDE=1; OFFSET:0
+14						(M)loop5[5]: START=0; STOP=1; STRIDE=1; OFFSET:0
+15							compute0: pe_array-MVMUL(['data', 'weight', 'bias'])->['out']
+16						loop5: END
+17					loop4: END
+18				loop3: END
+19				transfer4: OPERAND: out[OBUF->DRAM], SIZES: [[1, 64], [1, 128]]
+20			loop2: END
+21		loop1: END
+22	loop0: END
+23	config5: end-WBUF
+24	config6: end-IBUF
+25	config7: end-OBUF
+26	config8: end-BBUF
+27	config9: end-systolic_array

@@ -31,15 +31,22 @@ module ibuf_interface #(
     parameter integer  AXI_BURST_WIDTH              = 8,
     parameter integer  WSTRB_W                      = AXI_DATA_WIDTH/8,
 
+    parameter integer IBUF_WRITE_WIDTH              = 8,
+    parameter integer IBUF_WRITE_ADDR_WIDTH         = 8,
+    parameter integer IBUF_READ_WIDTH              = 8,
+    parameter integer IBUF_READ_ADDR_WIDTH         = 8,
+
   // Buffer
     parameter integer  ARRAY_N                      = 32,
     parameter integer  BUF_ADDR_W                   = 16,
     parameter integer  TAG_BUF_ADDR_W               = BUF_ADDR_W + TAG_W,
     parameter integer  BUF_WRITE_GROUP_SIZE_EXT		= AXI_DATA_WIDTH / DATA_WIDTH,
-    parameter integer  BUF_WRITE_NUM_GROUP_EXT		= ARRAY_N / BUF_WRITE_GROUP_SIZE_EXT,
+    parameter integer  BUF_WRITE_GROUP_SIZE_ARRAY_EXT = ARRAY_N < BUF_WRITE_GROUP_SIZE_EXT ? ARRAY_N : BUF_WRITE_GROUP_SIZE_EXT ,  
+    parameter integer  BUF_WRITE_NUM_GROUP_EXT		= ARRAY_N < BUF_WRITE_GROUP_SIZE_EXT ? 1 : ARRAY_N / BUF_WRITE_GROUP_SIZE_EXT,
     parameter integer  COUNTER_BUF_WRITE_GROUP_W    = $clog2(BUF_WRITE_NUM_GROUP_EXT) + 1,
     // The default case is that we use the maximum available on-chip bandwdith and write to all ARRAY_N number of IBUF banks!
     parameter integer  BUF_WRITE_GROUP_SIZE_SIMD	= ARRAY_N,
+    // todo: rohan change accordingly
     parameter integer  BUF_WRITE_NUM_GROUP_SIMD 	= ARRAY_N / BUF_WRITE_GROUP_SIZE_SIMD,
     parameter integer  GROUP_ENABLED                = 0
 
@@ -110,8 +117,8 @@ module ibuf_interface #(
     
   // Write to IBUF
     output	wire  [ ARRAY_N 			 -1 : 0 ]		buf_write_req_out,
-    output  wire  [ ARRAY_N*TAG_BUF_ADDR_W -1 : 0 ]		buf_write_addr_out,
-    output  wire  [ ARRAY_N*DATA_WIDTH   -1 : 0 ]		buf_write_data_out,
+    output  wire  [ ARRAY_N*IBUF_WRITE_ADDR_WIDTH -1 : 0 ]		buf_write_addr_out,
+    output  wire  [ ARRAY_N*IBUF_WRITE_WIDTH   -1 : 0 ]		buf_write_data_out,
 
   // CL_wrapper -> DDR AXI4 interface
     // Master Interface Write Address
@@ -298,6 +305,8 @@ module ibuf_interface #(
 
     wire                                        mem_write_req;
     wire [ AXI_DATA_WIDTH       -1 : 0 ]        mem_write_data;
+    wire                                        mem_write_req_fifo;
+    wire [ AXI_DATA_WIDTH       -1 : 0 ]        mem_write_data_fifo;
 
     wire                                        mem_write_ready;
 //    wire [ AXI_ID_WIDTH         -1 : 0 ]        mem_write_id;	
@@ -313,15 +322,16 @@ module ibuf_interface #(
 // WIRE and REGs
 //==============================================================================
   reg  [ COUNTER_BUF_WRITE_GROUP_W     -1 : 0 ]   buf_write_ext_counter_group; 
-  reg  [ BUF_ADDR_W             -1 : 0 ]          _buf_ext_write_addr;
+  reg  [ IBUF_WRITE_ADDR_WIDTH -TAG_W  -1 : 0 ]          _buf_ext_write_addr;
 
-  wire [ BUF_ADDR_W             -1 : 0 ]          buf_ext_write_addr;
-  wire [ TAG_BUF_ADDR_W         -1 : 0 ]          tag_buf_ext_write_addr;
-  wire [ BUF_WRITE_GROUP_SIZE_EXT*TAG_BUF_ADDR_W-1 : 0]  group_tag_buf_ext_write_addr;
+  wire [ IBUF_WRITE_ADDR_WIDTH -TAG_W  -1 : 0 ]          buf_ext_write_addr;
+  wire [ IBUF_WRITE_ADDR_WIDTH         -1 : 0 ]          tag_buf_ext_write_addr;
+  //wire [ BUF_WRITE_GROUP_SIZE_EXT*IBUF_WRITE_ADDR_WIDTH-1 : 0]  group_tag_buf_ext_write_addr;
+  wire [ ARRAY_N*IBUF_WRITE_ADDR_WIDTH-1 : 0]  group_tag_buf_ext_write_addr;
   
-  wire [ ARRAY_N*TAG_BUF_ADDR_W -1 : 0 ]          buf_ext_write_addr_out;
-  wire [ ARRAY_N                -1 : 0 ]          buf_ext_write_req_out;
-  wire [ ARRAY_N*DATA_WIDTH     -1 : 0 ]          buf_ext_write_data_out;
+  wire [ ARRAY_N*IBUF_WRITE_ADDR_WIDTH -1 : 0 ]         buf_ext_write_addr_out;
+  wire [ ARRAY_N                -1 : 0 ]                buf_ext_write_req_out;
+  wire [ ARRAY_N*IBUF_WRITE_WIDTH     -1 : 0 ]          buf_ext_write_data_out;
   
   wire [ ARRAY_N*TAG_BUF_ADDR_W -1 : 0 ]          buf_simd_write_addr_out;
   wire [ ARRAY_N                -1 : 0 ]          buf_simd_write_req_out;
@@ -329,7 +339,7 @@ module ibuf_interface #(
   
   
   
-  wire [ BUF_WRITE_GROUP_SIZE_EXT   -1 : 0]       group_buf_ext_write_req;
+  //wire [ BUF_WRITE_GROUP_SIZE_EXT   -1 : 0]       group_buf_ext_write_req;
   wire                                            buf_ext_write_req;
   
   reg                                             buf_simd_write_v;
@@ -564,8 +574,48 @@ module ibuf_interface #(
   // TODO: this part might not be correct, the axi_rd_done might get valid for the previous requests?!
   // TODO: whenever we add the FIFO to the AXI, we need an empty signal from the FIFO here too and it should be ANDed!
   //assign ld_ibuf_ext_simd_done = (single_ld_iter_flag ? axi_rd_done : (axi_rd_done && last_ld_iter)) || ld_ibuf_simd_done;
-  assign ld_ibuf_ext_simd_done = (single_ld_iter_flag ? axi_rd_done : (last_ld_iter && ld_received_data_flag)) || ld_ibuf_simd_done;
   
+  //assign ld_ibuf_ext_simd_done = (single_ld_iter_flag ? axi_rd_done : (last_ld_iter && ld_received_data_flag)) || ld_ibuf_simd_done;
+  assign ld_ibuf_ext_simd_done = (single_ld_iter_flag ? (ld_received_data_flag && axi_rd_done_d) : (last_ld_iter && ld_received_data_flag)) || ld_ibuf_simd_done;
+  
+  // rohan: this is needed otherwise axi_rd_done is set 2 cycles before ld_received_data_flag for single iteration which then
+  // makes the state machine stuck 
+  
+
+
+  reg axi_rd_done_d;
+  reg mws_rlast_d ;
+  reg axi_rd_last_pulse_d;
+  
+  always @(posedge clk) begin
+    if (reset)
+      mws_rlast_d <= 0;
+    else if (ldmem_state_q == LDMEM_BUSY_EXT)
+      mws_rlast_d <= mws_rlast;
+  end
+
+  assign axi_rd_last_pulse = mws_rlast && ~mws_rlast_d;
+  
+  always @(posedge clk) begin
+    axi_rd_last_pulse_d <= axi_rd_last_pulse;
+  end
+  
+//  always @(posedge clk) begin
+//    if (reset)
+//      axi_rd_last_pulse_flag <= 0;
+//    else if (~axi_rd_last_pulse_flag && axi_rd_last_pulse)
+//      axi_rd_last_pulse_flag <= 1;
+//    else if ( axi_rd_last_pulse_flag && axi_rd_done_d)
+//      axi_rd_last_pulse_flag <= 0;
+//  end
+
+  always @(posedge clk) begin
+    if (reset || ld_ibuf_ext_simd_done)
+      axi_rd_done_d <= 0;
+    else if (ldmem_state_q == LDMEM_BUSY_EXT &&  axi_rd_last_pulse_d )
+      axi_rd_done_d <= axi_rd_done;
+  end
+
   always @(posedge clk) begin
       if (reset) begin
          next_tag_req_counter <= 0;
@@ -701,9 +751,47 @@ module ibuf_interface #(
   end
 
 
+// counter to count number of ibuf load done
 
+  wire ld_ibuf_ext_simd_done_q, ld_ibuf_ext_simd_done_pulse;
+  reg [7:0] num_ibuf_loads;
+  register_sync #(1) sa_compute_req_pulse_reg (clk, reset, ld_ibuf_ext_simd_done, ld_ibuf_ext_simd_done_q);
+  assign ld_ibuf_ext_simd_done_pulse = ld_ibuf_ext_simd_done & ~ld_ibuf_ext_simd_done_q;
+  always @(posedge clk) begin
+    if (reset)
+      num_ibuf_loads <= 0;
+    else if (ld_ibuf_ext_simd_done_pulse == 1)
+      num_ibuf_loads <= num_ibuf_loads + 1;
+  end
 
-
+/*
+  ila_0 ibuf_ila (
+  .clk(clk),
+  // 1 bit width
+  .probe0(tag_req),
+  .probe1(tag_ready),
+  .probe2(ld_received_data_flag),
+  .probe3(ld_ibuf_ext_simd_done),
+  .probe4(axi_rd_req),
+  .probe5(axi_rd_done),
+  // 8 bit width
+  .probe6(ldmem_state_q),
+  .probe7(num_ibuf_loads),
+  .probe8(),
+  .probe9(0),
+  .probe10(0),
+  // 32 bit width
+  .probe11(axi_rd_addr[31:0]),
+  .probe12(axi_rd_addr[63:32]),
+  .probe13(axi_rd_req_size),
+  .probe14(0),
+  .probe15(0),
+  .probe16(0),
+  .probe17(0),
+  .probe18(0),
+  .probe19(0)
+  );
+*/
 
     assign ldmem_tag_done = ldmem_state_q == LDMEM_DONE;
     assign compute_tag_done = compute_done;
@@ -854,7 +942,7 @@ module ibuf_interface #(
     assign axi_wr_req_size = 0;
     assign axi_wr_addr = 0;
 
-    assign mem_write_ready = 1'b1;
+    //assign mem_write_ready = 1'b1;
     assign mem_read_data = 0;
 
 
@@ -865,6 +953,16 @@ reg  [31:0] sent_ld_requests, ld_axi_req_size;
 wire [63:0] expected_packets;
 reg  [63:0] received_packets;
 wire        ld_received_data_flag;
+
+localparam integer  LDMEM_PKTS_SM_IDLE         = 0;
+localparam integer  LDMEM_TO_SEND_PKTS         = 1;
+localparam integer  LDMEM_SENT_PKTS            = 2;
+localparam integer  LDMEM_PKTS_DONE            = 3;
+
+  reg ld_received_data_flag_temp;
+  reg [3:0] ldmem_pkt_done_state_d;
+  reg [3:0] ldmem_pkt_done_state_q;  
+
 always @(posedge clk) begin
   if (reset || ldmem_tag_done) begin
     sent_ld_requests <= 'b0;
@@ -885,9 +983,143 @@ always @(posedge clk) begin
 end
 
 
-assign expected_packets = last_ld_iter ? sent_ld_requests * ld_axi_req_size : 0;
+assign expected_packets = sent_ld_requests * ld_axi_req_size;
+assign ld_received_data_flag = ld_received_data_flag_temp;
 
-assign ld_received_data_flag = expected_packets == received_packets;
+
+
+  always @(*)
+  begin
+    ldmem_pkt_done_state_d = ldmem_pkt_done_state_q;
+    ld_received_data_flag_temp = 0;
+    case(ldmem_pkt_done_state_q)
+      LDMEM_PKTS_SM_IDLE: begin
+        if (ldmem_state_q == LDMEM_BUSY_EXT) begin
+          ldmem_pkt_done_state_d = LDMEM_TO_SEND_PKTS;
+        end
+      end
+      LDMEM_TO_SEND_PKTS: begin
+        if (last_ld_iter || single_ld_iter_flag)
+          ldmem_pkt_done_state_d = LDMEM_SENT_PKTS;
+      end
+      LDMEM_SENT_PKTS: begin
+        if (expected_packets == received_packets)
+          ldmem_pkt_done_state_d = LDMEM_PKTS_DONE;
+      end
+      LDMEM_PKTS_DONE: begin
+          ld_received_data_flag_temp = 1;
+          ldmem_pkt_done_state_d = LDMEM_PKTS_SM_IDLE;
+        end
+    endcase
+  end
+
+  always @(posedge clk)
+  begin
+    if (reset)
+      ldmem_pkt_done_state_q <= LDMEM_PKTS_SM_IDLE;
+    else
+      ldmem_pkt_done_state_q <= ldmem_pkt_done_state_d;
+  end
+
+//==============================================================================
+// AXI4 LD FIFO
+//==============================================================================
+
+   parameter integer FIFO_READ_LATENCY = 1;
+   parameter integer LD_FIFO_WRITE_DEPTH = 32;
+   parameter integer LD_PROG_EMPTY_THRESH = 3;
+   parameter integer LD_PROG_FULL_THRESH = LD_FIFO_WRITE_DEPTH - 4;
+
+   //parameter integer LD_READ_DATA_WIDTH = (ARRAY_N * DATA_WIDTH) > AXI_DATA_WIDTH ? AXI_DATA_WIDTH : (ARRAY_N * DATA_WIDTH);
+   // Because we have asymmetric memory banks for IBUF which can sustain larger width write
+   parameter integer LD_READ_DATA_WIDTH = AXI_DATA_WIDTH;
+   parameter integer LD_WRITE_DATA_WIDTH = AXI_DATA_WIDTH;
+   parameter integer LD_FIFO_READ_DEPTH =  LD_FIFO_WRITE_DEPTH*LD_WRITE_DATA_WIDTH/LD_READ_DATA_WIDTH;
+   parameter integer LD_RD_DATA_COUNT_WIDTH = $clog2(LD_FIFO_READ_DEPTH)+1;
+   parameter integer LD_WR_DATA_COUNT_WIDTH = $clog2(LD_FIFO_WRITE_DEPTH)+1;
+
+   wire                                   ld_fifo_almost_empty;
+   wire                                   ld_fifo_almost_full;
+   wire                                   ld_fifo_data_valid;
+   wire  [LD_READ_DATA_WIDTH - 1 : 0]     ld_fifo_dout;
+   wire                                   ld_fifo_empty;
+   wire                                   ld_fifo_full;
+   wire                                   ld_fifo_overflow;
+   wire                                   ld_fifo_prog_empty;
+   wire                                   ld_fifo_prog_full;
+   wire  [LD_RD_DATA_COUNT_WIDTH - 1 : 0] ld_fifo_rd_data_count;
+   wire                                   ld_fifo_rd_rst_busy;
+   wire                                   ld_fifo_underflow;
+   wire                                   ld_fifo_wr_ack;
+   wire  [LD_WR_DATA_COUNT_WIDTH - 1 : 0] ld_fifo_wr_data_count;
+   wire                                   ld_fifo_wr_rst_busy;
+   wire  [LD_WRITE_DATA_WIDTH - 1 : 0]    ld_fifo_din;
+   reg                                    ld_fifo_rd_en;
+   wire                                   ld_fifo_sleep;
+   wire                                   ld_fifo_wr_en;
+
+  // FIFO Inputs
+  assign ld_fifo_din    = mem_write_data_fifo;
+  assign ld_fifo_wr_en  = mem_write_req_fifo;
+  assign ld_fifo_sleep = 1'b0;    // used for low power design
+
+  // FIFO Outputs - todo: should we use just full
+  assign mem_write_ready = ~ld_fifo_prog_full && ~ld_fifo_wr_rst_busy;
+
+  assign mem_write_data = ld_fifo_dout;
+  assign mem_write_req = ld_fifo_data_valid;
+
+  // Control logic for FIFO signals
+  // register to make one cycle delay between read and write
+  always @(clk) begin
+    if (reset)
+      ld_fifo_rd_en <= 1'b0;
+    else begin
+      if (~ld_fifo_empty && ~ld_fifo_rd_rst_busy) begin
+        ld_fifo_rd_en <= 1'b1;
+      end
+      else begin
+        ld_fifo_rd_en <= 1'b0;
+      end
+    end
+  end
+
+  asymmetric_fifo_xpm #(
+   .FIFO_READ_LATENCY     (FIFO_READ_LATENCY  ),
+   .FIFO_WRITE_DEPTH      (LD_FIFO_WRITE_DEPTH   ),
+   .PROG_EMPTY_THRESH     (LD_PROG_EMPTY_THRESH  ),
+   .PROG_FULL_THRESH      (LD_PROG_FULL_THRESH   ),
+   .READ_DATA_WIDTH       (LD_READ_DATA_WIDTH    ),
+   .WRITE_DATA_WIDTH      (LD_WRITE_DATA_WIDTH   ),
+   .FIFO_READ_DEPTH       (LD_FIFO_READ_DEPTH    ),
+   .RD_DATA_COUNT_WIDTH   (LD_RD_DATA_COUNT_WIDTH),
+   .WR_DATA_COUNT_WIDTH   (LD_WR_DATA_COUNT_WIDTH)
+  ) axi_ld_fifo (
+   .wr_clk        (clk                  ),
+   .rst           (reset                ),
+   .almost_empty  (ld_fifo_almost_empty ),
+   .almost_full   (ld_fifo_almost_full  ),
+   .data_valid    (ld_fifo_data_valid   ),
+   .dout          (ld_fifo_dout         ),
+   .empty         (ld_fifo_empty        ),
+   .full          (ld_fifo_full         ),
+   .overflow      (ld_fifo_overflow     ),
+   .prog_empty    (ld_fifo_prog_empty   ),
+   .prog_full     (ld_fifo_prog_full    ),
+   .rd_data_count (ld_fifo_rd_data_count),
+   .rd_rst_busy   (ld_fifo_rd_rst_busy  ),
+   .underflow     (ld_fifo_underflow    ),
+   .wr_ack        (ld_fifo_wr_ack       ),
+   .wr_data_count (ld_fifo_wr_data_count),
+   .wr_rst_busy   (ld_fifo_wr_rst_busy  ),
+   .din           (ld_fifo_din          ),
+   .rd_en         (ld_fifo_rd_en        ),
+   .sleep         (ld_fifo_sleep        ),
+   .wr_en         (ld_fifo_wr_en        )                                 
+  );
+
+////////////////////////////////////////////////////////////////////////
+
 
 /////// AXI Interface
  ddr_memory_interface_control_m_axi_fifo #(
@@ -940,10 +1172,10 @@ assign ld_received_data_flag = expected_packets == received_packets;
     .ctrl_addr_offset_wr            ( axi_wr_addr                    ),
     .ctrl_xfer_size_in_bytes_wr     ( axi_wr_req_size                ),
         
-    .rd_tvalid                      ( mem_write_req                  ),
+    .rd_tvalid                      ( mem_write_req_fifo             ),
     // Currently theere is no FIFO in the design that stores the extra data. this is the currnet limitation: 512 <= num_banks * data_width
     .rd_tready                      ( mem_write_ready                ),
-    .rd_tdata                       ( mem_write_data                 ),
+    .rd_tdata                       ( mem_write_data_fifo                 ),
     .rd_tkeep                       (                                ),
     // We are using the done signal not the last!
     .rd_tlast                       (                                ),
@@ -964,7 +1196,10 @@ assign ld_received_data_flag = expected_packets == received_packets;
     
   assign ld_ibuf_simd_start = simd_ibuf_write_req[0] && &(~simd_ibuf_write_req[ARRAY_N-1:1]);
   assign ld_ibuf_simd_last_iter = (~simd_ibuf_write_req[0]) && (&simd_ibuf_write_req[ARRAY_N-1:1]);
-  assign ld_ibuf_simd_done = simd_ibuf_write_req[ARRAY_N-1] && &(~simd_ibuf_write_req[ARRAY_N-2:0]);
+  
+  //assign ld_ibuf_simd_done = simd_ibuf_write_req[ARRAY_N-1] && &(~simd_ibuf_write_req[ARRAY_N-2:0]);
+  // todo: uncomment above line when SIMD is added
+  assign ld_ibuf_simd_done = 0;
   
  
 //=============================================================
@@ -1007,8 +1242,8 @@ assign ld_received_data_flag = expected_packets == received_packets;
     
   genvar i;
   generate
-    for (i=0; i<BUF_WRITE_GROUP_SIZE_EXT; i=i+1) begin
-        assign group_tag_buf_ext_write_addr[(i+1)*TAG_BUF_ADDR_W-1: i*TAG_BUF_ADDR_W] = tag_buf_ext_write_addr;     
+    for (i=0; i<ARRAY_N; i=i+1) begin
+        assign group_tag_buf_ext_write_addr[(i+1)*IBUF_WRITE_ADDR_WIDTH-1: i*IBUF_WRITE_ADDR_WIDTH] = tag_buf_ext_write_addr;     
     end
   endgenerate
   
@@ -1022,7 +1257,7 @@ assign ld_received_data_flag = expected_packets == received_packets;
   genvar k;
   generate
       for (k=0; k<BUF_WRITE_NUM_GROUP_EXT; k=k+1) begin
-             assign buf_ext_write_req_out[(k+1)*BUF_WRITE_GROUP_SIZE_EXT-1: (k)*BUF_WRITE_GROUP_SIZE_EXT] = (buf_write_ext_counter_group == k )? {BUF_WRITE_GROUP_SIZE_EXT{buf_ext_write_req}} :0;
+             assign buf_ext_write_req_out[(k+1)*BUF_WRITE_GROUP_SIZE_ARRAY_EXT-1: (k)*BUF_WRITE_GROUP_SIZE_ARRAY_EXT] = (buf_write_ext_counter_group == k )? {BUF_WRITE_GROUP_SIZE_ARRAY_EXT{buf_ext_write_req}} :0;
       end
   endgenerate
   
@@ -1063,11 +1298,15 @@ assign ld_received_data_flag = expected_packets == received_packets;
   
   
   
-  reg [ ARRAY_N*TAG_BUF_ADDR_W -1 : 0 ]          _buf_write_addr_out;
+  reg [ ARRAY_N*IBUF_WRITE_ADDR_WIDTH -1 : 0 ]          _buf_write_addr_out;
   reg [ ARRAY_N                -1 : 0 ]          _buf_write_req_out;
-  reg [ ARRAY_N*DATA_WIDTH     -1 : 0 ]          _buf_write_data_out;  
+  reg [ ARRAY_N*IBUF_WRITE_WIDTH     -1 : 0 ]    _buf_write_data_out;  
    
   always @(*) begin
+    // reseting values so that latches are not inferred.
+    _buf_write_req_out = 0;
+    _buf_write_addr_out = 0;
+    _buf_write_data_out = 0;
      if (buf_ext_write_v) begin
          _buf_write_addr_out = buf_ext_write_addr_out;
          _buf_write_req_out = buf_ext_write_req_out;
