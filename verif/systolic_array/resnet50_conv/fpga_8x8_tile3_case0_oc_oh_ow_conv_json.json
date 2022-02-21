@@ -7,15 +7,15 @@
       "iterable_dimensions": {
         "OC": 128,
         "N": 1,
-        "IC": 64,
-        "KH": 1,
-        "KW": 1,
-        "OH": 7,
-        "OW": 7
+        "IC": 128,
+        "KH": 3,
+        "KW": 3,
+        "OH": 10,
+        "OW": 10
       },
       "operation_parameters": {
-        "stride": 2,
-        "pad": 0
+        "stride": 1,
+        "pad": 1
       },
       "inputs": [
         {
@@ -24,9 +24,9 @@
           "dtype": "FXP8",
           "shape_symbols": {
             "N": 1,
-            "IH": 14,
-            "IW": 14,
-            "IC": 64
+            "IH": 12,
+            "IW": 12,
+            "IC": 128
           },
           "data_path": [
             "DRAM",
@@ -36,21 +36,21 @@
           "tiling": {
             "DRAM": {
               "N": 1,
-              "IH": 14,
-              "IW": 14,
-              "IC": 64
+              "IH": 12,
+              "IW": 12,
+              "IC": 128
             },
             "IBUF": {
               "N": 1,
-              "IH": 14,
-              "IW": 14,
-              "IC": 64
+              "IH": 7,
+              "IW": 7,
+              "IC": 128
             },
             "pe_array": {
               "N": 1,
               "IH": 1,
               "IW": 1,
-              "IC": 64
+              "IC": 8
             }
           }
         },
@@ -59,9 +59,9 @@
           "unique_name": "conv.weight",
           "dtype": "FXP8",
           "shape_symbols": {
-            "KH": 1,
-            "KW": 1,
-            "IC": 64,
+            "KH": 3,
+            "KW": 3,
+            "IC": 128,
             "OC": 128
           },
           "data_path": [
@@ -71,22 +71,22 @@
           ],
           "tiling": {
             "DRAM": {
-              "KH": 1,
-              "KW": 1,
-              "IC": 64,
+              "KH": 3,
+              "KW": 3,
+              "IC": 128,
               "OC": 128
             },
             "WBUF": {
-              "KH": 1,
-              "KW": 1,
-              "IC": 64,
+              "KH": 3,
+              "KW": 3,
+              "IC": 128,
               "OC": 64
             },
             "pe_array": {
               "KH": 1,
               "KW": 1,
-              "IC": 64,
-              "OC": 64
+              "IC": 8,
+              "OC": 8
             }
           }
         },
@@ -110,7 +110,7 @@
               "OC": 64
             },
             "pe_array": {
-              "OC": 64
+              "OC": 8
             }
           }
         }
@@ -122,8 +122,8 @@
           "dtype": "FXP32",
           "shape_symbols": {
             "N": 1,
-            "OH": 7,
-            "OW": 7,
+            "OH": 10,
+            "OW": 10,
             "OC": 128
           },
           "data_path": [
@@ -136,21 +136,21 @@
           "tiling": {
             "DRAM": {
               "N": 1,
-              "OH": 7,
-              "OW": 7,
+              "OH": 10,
+              "OW": 10,
               "OC": 128
             },
             "OBUF": {
               "N": 1,
-              "OH": 7,
-              "OW": 7,
+              "OH": 5,
+              "OW": 5,
               "OC": 64
             },
             "pe_array": {
               "N": 1,
               "OH": 1,
               "OW": 1,
-              "OC": 64
+              "OC": 8
             }
           }
         }
@@ -229,25 +229,25 @@
           "op_type": "loop",
           "op_id": 7,
           "start": 0,
-          "end": 64,
+          "end": 128,
           "offset": 0,
-          "stride": 64
+          "stride": 128
         },
         {
           "op_type": "loop",
           "op_id": 8,
           "start": 0,
-          "end": 1,
+          "end": 3,
           "offset": 0,
-          "stride": 1
+          "stride": 3
         },
         {
           "op_type": "loop",
           "op_id": 9,
           "start": 0,
-          "end": 1,
+          "end": 3,
           "offset": 0,
-          "stride": 1
+          "stride": 3
         },
         {
           "op_type": "transfer",
@@ -259,7 +259,7 @@
           ],
           "transfers": {
             "DRAM->WBUF": {
-              "size": 8192,
+              "size": 147456,
               "offset": [
                 "DIM:0,LOOPID:3,OFFSET:0",
                 "DIM:1,LOOPID:4,OFFSET:0",
@@ -268,7 +268,7 @@
               ]
             },
             "WBUF->pe_array": {
-              "size": 4096,
+              "size": 73728,
               "offset": [
                 "DIM:0,LOOPID:10,OFFSET:0",
                 "DIM:1,LOOPID:11,OFFSET:0",
@@ -282,17 +282,17 @@
           "op_type": "loop",
           "op_id": 10,
           "start": 0,
-          "end": 7,
+          "end": 10,
           "offset": 0,
-          "stride": 7
+          "stride": 5
         },
         {
           "op_type": "loop",
           "op_id": 11,
           "start": 0,
-          "end": 7,
+          "end": 10,
           "offset": 0,
-          "stride": 7
+          "stride": 5
         },
         {
           "op_type": "transfer",
@@ -304,7 +304,7 @@
           ],
           "transfers": {
             "DRAM->OBUF": {
-              "size": 6272,
+              "size": 12800,
               "offset": [
                 "DIM:0,LOOPID:1,OFFSET:0",
                 "DIM:1,LOOPID:5,OFFSET:0",
@@ -313,7 +313,7 @@
               ]
             },
             "pe_array->OBUF": {
-              "size": 3136,
+              "size": 1600,
               "offset": [
                 "DIM:0,LOOPID:8,OFFSET:0",
                 "DIM:1,LOOPID:12,OFFSET:0",
@@ -322,7 +322,7 @@
               ]
             },
             "OBUF->DRAM": {
-              "size": 6272,
+              "size": 12800,
               "offset": [
                 "DIM:0,LOOPID:1,OFFSET:0",
                 "DIM:1,LOOPID:5,OFFSET:0",
@@ -342,22 +342,22 @@
           ],
           "transfers": {
             "DRAM->IBUF": {
-              "size": 12544,
+              "size": 18432,
               "offset": [
                 "DIM:0,LOOPID:1,OFFSET:0",
-                "DIM:1,LOOPID:5,OFFSET:0",
                 "DIM:1,LOOPID:3,OFFSET:0",
+                "DIM:1,LOOPID:5,OFFSET:0",
                 "DIM:2,LOOPID:4,OFFSET:0",
                 "DIM:2,LOOPID:6,OFFSET:0",
                 "DIM:3,LOOPID:2,OFFSET:0"
               ]
             },
             "IBUF->pe_array": {
-              "size": 12544,
+              "size": 6272,
               "offset": [
                 "DIM:0,LOOPID:8,OFFSET:0",
-                "DIM:1,LOOPID:12,OFFSET:0",
                 "DIM:1,LOOPID:10,OFFSET:0",
+                "DIM:1,LOOPID:12,OFFSET:0",
                 "DIM:2,LOOPID:11,OFFSET:0",
                 "DIM:2,LOOPID:13,OFFSET:0",
                 "DIM:3,LOOPID:9,OFFSET:0"
@@ -385,7 +385,7 @@
           "op_type": "loop",
           "op_id": 34,
           "start": 0,
-          "end": 64,
+          "end": 128,
           "offset": 0,
           "stride": 1
         },
@@ -393,7 +393,7 @@
           "op_type": "loop",
           "op_id": 36,
           "start": 0,
-          "end": 1,
+          "end": 3,
           "offset": 0,
           "stride": 1
         },
@@ -401,7 +401,7 @@
           "op_type": "loop",
           "op_id": 38,
           "start": 0,
-          "end": 1,
+          "end": 3,
           "offset": 0,
           "stride": 1
         },
@@ -409,7 +409,7 @@
           "op_type": "loop",
           "op_id": 40,
           "start": 0,
-          "end": 7,
+          "end": 5,
           "offset": 0,
           "stride": 1
         },
@@ -417,7 +417,7 @@
           "op_type": "loop",
           "op_id": 42,
           "start": 0,
-          "end": 7,
+          "end": 5,
           "offset": 0,
           "stride": 1
         },
@@ -480,7 +480,7 @@
           ],
           "transfers": {
             "DRAM->OBUF": {
-              "size": 6272,
+              "size": 12800,
               "offset": [
                 "DIM:0,LOOPID:1,OFFSET:0",
                 "DIM:1,LOOPID:5,OFFSET:0",
@@ -489,7 +489,7 @@
               ]
             },
             "pe_array->OBUF": {
-              "size": 3136,
+              "size": 1600,
               "offset": [
                 "DIM:0,LOOPID:8,OFFSET:0",
                 "DIM:1,LOOPID:12,OFFSET:0",
@@ -498,7 +498,7 @@
               ]
             },
             "OBUF->DRAM": {
-              "size": 6272,
+              "size": 12800,
               "offset": [
                 "DIM:0,LOOPID:1,OFFSET:0",
                 "DIM:1,LOOPID:5,OFFSET:0",

@@ -38,10 +38,11 @@ module obuf_interface #(
     parameter integer  BUF_ADDR_W                   = 16,
     parameter integer  TAG_BUF_ADDR_W               = BUF_ADDR_W + TAG_W,
     parameter integer  BUF_WRITE_GROUP_SIZE_EXT     = AXI_DATA_WIDTH / DATA_WIDTH,
-    parameter integer  BUF_WRITE_NUM_GROUP_EXT      = ARRAY_M / BUF_WRITE_GROUP_SIZE_EXT,
+    parameter integer  BUF_WRITE_NUM_GROUP_EXT      = ARRAY_M / BUF_WRITE_GROUP_SIZE_EXT <= 0 ? 1 : ARRAY_M / BUF_WRITE_GROUP_SIZE_EXT,
     parameter integer  COUNTER_BUF_WRITE_GROUP_W    = $clog2(BUF_WRITE_NUM_GROUP_EXT) + 1,
     parameter integer  BUF_READ_GROUP_SIZE_EXT      = BUF_WRITE_GROUP_SIZE_EXT,
-    parameter integer  BUF_READ_NUM_GROUP_EXT       = BUF_WRITE_NUM_GROUP_EXT,
+    parameter integer  BUF_READ_GROUP_SIZE_ARRAY_EXT = ARRAY_M < BUF_READ_GROUP_SIZE_EXT ? ARRAY_M : BUF_READ_GROUP_SIZE_EXT,
+    parameter integer  BUF_READ_NUM_GROUP_EXT       = BUF_WRITE_NUM_GROUP_EXT <= 0 ? 1 : BUF_WRITE_NUM_GROUP_EXT,
     parameter integer  COUNTER_BUF_READ_GROUP_W     = COUNTER_BUF_WRITE_GROUP_W,
     parameter integer  WAIT_CYCLES_COMPUTE_ST       = ARRAY_N,
     parameter integer  WAIT_CYCLES_COMPUTE_ST_W     = $clog2(ARRAY_N),
@@ -353,7 +354,9 @@ module obuf_interface #(
 
     wire                                        mem_write_req;
     wire                                        mem_write_req_fifo;
-    wire [ AXI_DATA_WIDTH       -1 : 0 ]        mem_write_data;
+    // Rohan commented: This should be similar to the ld_fifo_dout
+    //wire [ AXI_DATA_WIDTH       -1 : 0 ]        mem_write_data;
+    wire [LD_READ_DATA_WIDTH - 1 : 0]           mem_write_data;
     wire [ AXI_DATA_WIDTH       -1 : 0 ]        mem_write_data_fifo;
     wire                                        mem_write_ready;
     
@@ -367,13 +370,13 @@ module obuf_interface #(
 
   wire [ BUF_ADDR_W             -1 : 0 ]          buf_ext_write_addr;
 //  wire [ TAG_BUF_ADDR_W         -1 : 0 ]          tag_buf_ext_write_addr;
-  wire [ BUF_WRITE_GROUP_SIZE_EXT*BUF_ADDR_W-1 : 0]  group_buf_ext_write_addr;
+  wire [ ARRAY_M*BUF_ADDR_W-1 : 0]                group_buf_ext_write_addr;
 
   wire [ ARRAY_M*BUF_ADDR_W -1 : 0 ]              buf_ext_write_addr_out;
   wire [ ARRAY_M                -1 : 0 ]          buf_ext_write_req_out;
   wire [ ARRAY_M*DATA_WIDTH     -1 : 0 ]          buf_ext_write_data_out;
 
-  wire [ BUF_WRITE_GROUP_SIZE_EXT   -1 : 0]       group_buf_ext_write_req;
+  wire [ ARRAY_M   -1 : 0]                        group_buf_ext_write_req;
   wire                                            buf_ext_write_req;
 
 
@@ -617,17 +620,19 @@ mem_walker_stride_group #(
 //=============================================================
 
 reg [ MEM_REQ_W            -1 : 0 ] st_buf_read_en_cntr;
+localparam integer OBUF_READ_DATA_WIDTH_BYTES = ARRAY_M * OUTPUT_DATA_BYTES < AXI_DATA_WIDTH_BYTES ? ARRAY_M * OUTPUT_DATA_BYTES : AXI_DATA_WIDTH_BYTES;
+
 wire st_buf_read_en;
 always @(posedge clk) begin
   if (reset || stmem_state_q == STMEM_DONE)
     st_buf_read_en_cntr <= 'b0;
   else begin // because in the same cycle, st_addr_v might be asserted and we can still read the buffer
     if (st_addr_v && (st_buf_read_en_cntr > 0) && ~st_fifo_prog_full)
-      st_buf_read_en_cntr <= st_buf_read_en_cntr + (total_st_req_size/AXI_DATA_WIDTH_BYTES) - 1'b1;
+      st_buf_read_en_cntr <= st_buf_read_en_cntr + (total_st_req_size/OBUF_READ_DATA_WIDTH_BYTES) - 1'b1;
     else if (st_buf_read_en_cntr > 0 && ~st_fifo_prog_full)
       st_buf_read_en_cntr <= st_buf_read_en_cntr - 1'b1;
     else if (st_addr_v)
-      st_buf_read_en_cntr <= st_buf_read_en_cntr + (total_st_req_size/AXI_DATA_WIDTH_BYTES);
+      st_buf_read_en_cntr <= st_buf_read_en_cntr + (total_st_req_size/OBUF_READ_DATA_WIDTH_BYTES);
   end
 end
 
@@ -1099,6 +1104,51 @@ end
     else
       ldmem_state_q <= ldmem_state_d;
   end
+
+  // counter to count number of ibuf load done
+
+  wire st_obuf_ext_done_q, st_obuf_ext_done_pulse;
+  reg [7:0] num_obuf_stores;
+  register_sync #(1) axi_rd_done_q_reg (clk, reset, st_obuf_ext_done, st_obuf_ext_done_q);
+  assign st_obuf_ext_done_pulse = st_obuf_ext_done & ~st_obuf_ext_done_q;
+  always @(posedge clk) begin
+    if (reset)
+      num_obuf_stores <= 0;
+    else if (st_obuf_ext_done_pulse == 1)
+      num_obuf_stores <= num_obuf_stores + 1;
+  end
+/*
+=======
+
+  ila_0 obuf_ila (
+  .clk(clk),
+  // 1 bit width
+  .probe0(tag_req),
+  .probe1(tag_ready),
+  .probe2(compute_tag_ready),
+  .probe3(compute_tag_done),
+  .probe4(stmem_tag_ready),
+  .probe5(stmem_tag_done),
+  // 8 bit width
+  .probe6(ldmem_state_q),
+  .probe7(num_wbuf_loads),
+  .probe8(stmem_state_q),
+  .probe9(st_sent_data_flag),
+  .probe10(num_obuf_stores),
+  // 32 bit width
+  .probe11(axi_rd_addr[31:0]),
+  .probe12(axi_rd_addr[63:32]),
+  .probe13(axi_rd_req_size),
+  .probe14(0),
+  .probe15(0),
+  .probe16(0),
+  .probe17(0),
+  .probe18(0),
+  .probe19(0)
+  );
+*/
+  
+  
 //================================================================
 //================================================================
 // ST FSM
@@ -1370,13 +1420,17 @@ assign obuf_first_ic_outer_loop_ld = obuf_first_ic_outer_loop_ld_fifo;
        ldmem_split_state_qq <= ldmem_split_state_q;
   end
 
-    assign axi_rd_req = (ld_req_valid_q && ~split_ld_req_v) || (ldmem_split_state_q == SPLIT_LD_REQ_A) || (ldmem_split_state_q == SPLIT_LD_REQ_B);
+    //assign axi_rd_req = (ld_req_valid_q && ~split_ld_req_v) || (ldmem_split_state_q == SPLIT_LD_REQ_A) || (ldmem_split_state_q == SPLIT_LD_REQ_B);
+    assign axi_rd_req = ld_req_valid_q;
     // rohan
     //assign axi_rd_req_size = ld_req_size * (ARRAY_N * DATA_WIDTH) / 8;
     assign rd_req_size_coefficient = ARRAY_M;
-    assign axi_rd_req_size = (ld_req_valid_q && ~split_ld_req_v) ? (ld_req_size * rd_req_size_coefficient) : (ldmem_split_state_q == SPLIT_LD_REQ_A) ? split_a_ld_req_size * rd_req_size_coefficient : split_b_ld_req_size * rd_req_size_coefficient;
+    //assign axi_rd_req_size = (ld_req_valid_q && ~split_ld_req_v) ? (ld_req_size * rd_req_size_coefficient) : (ldmem_split_state_q == SPLIT_LD_REQ_A) ? split_a_ld_req_size * rd_req_size_coefficient : split_b_ld_req_size * rd_req_size_coefficient;
+    assign axi_rd_req_size = (ld_req_valid_q) ? (ld_req_size * rd_req_size_coefficient) : 0;
   
-    assign axi_rd_addr = (ld_req_valid_q && ~split_ld_req_v) ? ld_req_addr : (ldmem_split_state_q == SPLIT_LD_REQ_A) ? split_a_ld_req_addr : split_b_ld_req_addr;
+    // Rohan commented to remove split logic
+    //assign axi_rd_addr = (ld_req_valid_q && ~split_ld_req_v) ? ld_req_addr : (ldmem_split_state_q == SPLIT_LD_REQ_A) ? split_a_ld_req_addr : split_b_ld_req_addr;
+    assign axi_rd_addr = (ld_req_valid_q) ? ld_req_addr : 0;
 
 wire [ MEM_REQ_W            -1 : 0 ]        total_st_req_size;
 assign total_st_req_size = st_req_size * wr_req_size_coefficient;
@@ -1626,6 +1680,7 @@ assign total_st_req_size = st_req_size * wr_req_size_coefficient;
 ///////////////////////////////////////////
 
 
+
 ///////////////////////////////////////// 
 // Logic to count requested vs received data packets
 // Load
@@ -1633,6 +1688,57 @@ reg  [31:0] sent_ld_requests, ld_axi_req_size;
 wire [63:0] expected_packets;
 reg  [63:0] received_packets;
 wire        ld_received_data_flag;
+reg         axi_rd_done_d;
+reg         mws_rlast_d ;
+reg         axi_rd_last_pulse_d;
+  localparam integer  LDMEM_PKTS_SM_IDLE         = 0;
+  localparam integer  LDMEM_TO_SEND_PKTS         = 1;
+  localparam integer  LDMEM_SENT_PKTS            = 2;
+  localparam integer LDMEM_PKTS_DONE            = 3;
+
+  reg ld_received_data_flag_temp;
+  reg [3:0] ldmem_pkt_done_state_d;
+  reg [3:0] ldmem_pkt_done_state_q;  
+
+
+reg  [31:0] sent_st_requests, st_axi_req_size;
+wire [63:0] to_send_packets;
+reg  [63:0] sent_packets;
+//wire read_buf_data;
+wire        st_sent_data_flag;
+
+  localparam integer  STMEM_PKTS_SM_IDLE         = 0;
+  localparam integer  STMEM_TO_SEND_PKTS         = 1;
+  localparam integer  STMEM_SENT_PKTS            = 2;
+  localparam integer STMEM_PKTS_WAIT            = 3;
+  localparam integer  STMEM_PKTS_COMP            = 4;
+  reg st_sent_data_flag_temp;
+  reg [3:0] stmem_pkt_done_state_d;
+  reg [3:0] stmem_pkt_done_state_q;    
+
+
+
+  always @(posedge clk) begin
+    if (reset)
+      mws_rlast_d <= 0;
+    else if (ldmem_state_q == LDMEM_BUSY)
+      mws_rlast_d <= mws_rlast;
+  end
+  
+  assign axi_rd_last_pulse = mws_rlast && ~mws_rlast_d;
+  
+  always @(posedge clk) begin
+    axi_rd_last_pulse_d <= axi_rd_last_pulse;
+  end
+
+  always @(posedge clk) begin
+    if (reset || ld_obuf_ext_done)
+      axi_rd_done_d <= 0;
+    else if (ldmem_state_q == LDMEM_BUSY &&  axi_rd_last_pulse_d )
+      axi_rd_done_d <= axi_rd_done;
+  end
+
+
 always @(posedge clk) begin
   if (reset || ldmem_tag_done) begin
     sent_ld_requests <= 'b0;
@@ -1652,20 +1758,48 @@ always @(posedge clk) begin
     received_packets <= received_packets + WSTRB_W;
 end
 
+assign expected_packets = sent_ld_requests * ld_axi_req_size * WRITE_READ_RATIO;
 
-assign expected_packets = last_ld_iter ? sent_ld_requests * ld_axi_req_size : 0;
+assign ld_received_data_flag =  ld_received_data_flag_temp;
 
-assign ld_received_data_flag = expected_packets == received_packets;
+  
 
+  always @(*)
+  begin
+    ldmem_pkt_done_state_d = ldmem_pkt_done_state_q;
+    ld_received_data_flag_temp = 0;
+    case(ldmem_pkt_done_state_q)
+      LDMEM_PKTS_SM_IDLE: begin
+        if (ldmem_state_q == LDMEM_BUSY) begin
+          ldmem_pkt_done_state_d = LDMEM_TO_SEND_PKTS;
+        end
+      end
+      LDMEM_TO_SEND_PKTS: begin
+        if (last_ld_iter || single_ld_iter_flag)
+          ldmem_pkt_done_state_d = LDMEM_SENT_PKTS;
+      end
+      LDMEM_SENT_PKTS: begin
+        if (expected_packets == received_packets)
+          ldmem_pkt_done_state_d = LDMEM_PKTS_DONE;
+      end
+      LDMEM_PKTS_DONE: begin
+          ld_received_data_flag_temp = 1;
+          ldmem_pkt_done_state_d = LDMEM_PKTS_SM_IDLE;
+        end
+    endcase
+  end
+
+  always @(posedge clk)
+  begin
+    if (reset)
+      ldmem_pkt_done_state_q <= LDMEM_PKTS_SM_IDLE;
+    else
+      ldmem_pkt_done_state_q <= ldmem_pkt_done_state_d;
+  end
 
 ///////////////////////////////////////// 
 // Store
 
-reg  [31:0] sent_st_requests, st_axi_req_size;
-wire [63:0] to_send_packets;
-reg  [63:0] sent_packets;
-//wire read_buf_data;
-wire        st_sent_data_flag;
 always @(posedge clk) begin
   if (reset || stmem_tag_done) begin
     sent_st_requests <= 'b0;
@@ -1686,10 +1820,90 @@ always @(posedge clk) begin
     sent_packets <= sent_packets + WSTRB_W;
 end
 
+// Counters to count number AXI channel requests and responses. Only when num_req, num_last and num_bvalid match, a write transaction is complete. 
 
-assign to_send_packets = last_st_iter ? sent_st_requests * st_axi_req_size : 0;
+reg [31 : 0] num_awaddr_requests;
+reg [31 : 0] num_wlast_response;
+reg [31 : 0] num_bvalid_response;
 
-assign st_sent_data_flag = to_send_packets == sent_packets;
+always @(posedge clk) begin
+  if (reset || stmem_tag_done)
+    num_awaddr_requests <= 0;
+  else if (mws_awvalid)
+    num_awaddr_requests <= num_awaddr_requests + 1;
+end
+
+always @(posedge clk) begin
+  if (reset || stmem_tag_done)
+    num_wlast_response <= 0;
+  else if (mws_wlast)
+    num_wlast_response <= num_wlast_response + 1;
+end
+
+always @(posedge clk) begin
+  if (reset || stmem_tag_done)
+    num_bvalid_response <= 0;
+  else if (mws_bvalid)
+    num_bvalid_response <= num_bvalid_response + 1;
+end
+
+
+assign to_send_packets = sent_st_requests * st_axi_req_size;
+
+// State Machine to detect when packets are received
+
+
+  always @(*)
+  begin
+    stmem_pkt_done_state_d = stmem_pkt_done_state_q;
+    st_sent_data_flag_temp = 0;
+    case(stmem_pkt_done_state_q)
+      STMEM_PKTS_SM_IDLE: begin
+        if (stmem_state_q == STMEM_DDR) begin
+          stmem_pkt_done_state_d = STMEM_TO_SEND_PKTS;
+        end
+      end
+      STMEM_TO_SEND_PKTS: begin
+        if (last_st_iter)
+          stmem_pkt_done_state_d = STMEM_SENT_PKTS;
+      end
+      STMEM_SENT_PKTS: begin
+        if (to_send_packets == sent_packets)
+          stmem_pkt_done_state_d = STMEM_PKTS_WAIT;
+      end
+      STMEM_PKTS_WAIT: begin
+          stmem_pkt_done_state_d = STMEM_PKTS_COMP;
+      end
+      STMEM_PKTS_COMP: begin
+        if (num_awaddr_requests == num_bvalid_response) begin
+          st_sent_data_flag_temp = 1;
+          stmem_pkt_done_state_d = STMEM_PKTS_SM_IDLE;
+        end
+      end
+    endcase
+  end
+
+  always @(posedge clk)
+  begin
+    if (reset)
+      stmem_pkt_done_state_q <= SPLIT_ST_REQ_IDLE;
+    else
+      stmem_pkt_done_state_q <= stmem_pkt_done_state_d;
+  end
+
+
+
+//assign st_sent_data_flag = to_send_packets == sent_packets && num_awaddr_requests == num_bvalid_response;
+assign st_sent_data_flag =  st_sent_data_flag_temp;
+
+
+// Note: The OBUF fifos are assymmetric which means that if the size of the ARRAY_M * DATA_WIDTH is not equal to the 
+// DDR bandwidth then the write and read widht will be different. The read width for st_fifo/write width for ld_fifo will always be equal
+// to the DDR bandwidth.
+
+// The reason why this is different from ibuf is because in IBUF we just read from systolic array while in OBUF we read and write which puts
+// a constraint on the read and write width to be equal to DATA_WIDTH.
+
 
 //==============================================================================
 // AXI4 LD FIFO
@@ -1698,9 +1912,10 @@ assign st_sent_data_flag = to_send_packets == sent_packets;
    parameter integer FIFO_READ_LATENCY = 1;
    parameter integer LD_FIFO_WRITE_DEPTH = 32;
    parameter integer LD_PROG_EMPTY_THRESH = 3;
-   parameter integer LD_PROG_FULL_THRESH = 3;
+   parameter integer LD_PROG_FULL_THRESH = LD_FIFO_WRITE_DEPTH - 4;
    // todo: Check with Hardik, when read_width > write_width then fifo empty 
    parameter integer LD_READ_DATA_WIDTH = (ARRAY_M * DATA_WIDTH) > AXI_DATA_WIDTH ? AXI_DATA_WIDTH : (ARRAY_M * DATA_WIDTH);
+   parameter integer WRITE_READ_RATIO = AXI_DATA_WIDTH / LD_READ_DATA_WIDTH;
    parameter integer LD_WRITE_DATA_WIDTH = AXI_DATA_WIDTH;
    parameter integer LD_FIFO_READ_DEPTH =  LD_FIFO_WRITE_DEPTH*LD_WRITE_DATA_WIDTH/LD_READ_DATA_WIDTH;
    parameter integer LD_RD_DATA_COUNT_WIDTH = $clog2(LD_FIFO_READ_DEPTH)+1;
@@ -1728,12 +1943,14 @@ assign st_sent_data_flag = to_send_packets == sent_packets;
 
   // FIFO Inputs
   assign ld_fifo_din    = mem_write_data_fifo;
-  assign ld_fifo_wr_en  = mem_write_req_fifo;
+  assign ld_fifo_wr_en  = mem_write_req_fifo && mem_write_ready; // Rohan: use delayed version?
   assign ld_fifo_sleep = 1'b0;    // used for low power design
 
   // FIFO Outputs - todo: should we use just full
   assign mem_write_ready = ~ld_fifo_prog_full && ~ld_fifo_wr_rst_busy;
 
+  register_sync #(1) mem_write_ready_reg (clk, reset, mem_write_ready, mem_write_ready_d);
+ 
   assign mem_write_data = ld_fifo_dout;
   assign mem_write_req = ld_fifo_data_valid;
 
@@ -1795,7 +2012,7 @@ assign st_sent_data_flag = to_send_packets == sent_packets;
    parameter integer ST_FIFO_WRITE_DEPTH = 64;
    parameter integer ST_PROG_EMPTY_THRESH = 3;
    parameter integer ST_PROG_FULL_THRESH = 60;
-   parameter integer ST_READ_DATA_WIDTH = ARRAY_M * DATA_WIDTH > AXI_DATA_WIDTH ? AXI_DATA_WIDTH : ARRAY_M * DATA_WIDTH;
+   parameter integer ST_READ_DATA_WIDTH = AXI_DATA_WIDTH;
    parameter integer ST_WRITE_DATA_WIDTH = ARRAY_M * DATA_WIDTH > AXI_DATA_WIDTH ? AXI_DATA_WIDTH : ARRAY_M * DATA_WIDTH;;
    parameter integer ST_FIFO_READ_DEPTH =  ST_FIFO_WRITE_DEPTH*ST_WRITE_DATA_WIDTH/ST_READ_DATA_WIDTH;
    parameter integer ST_RD_DATA_COUNT_WIDTH = $clog2(ST_FIFO_READ_DEPTH)+1;
@@ -1950,10 +2167,15 @@ assign st_sent_data_flag = to_send_packets == sent_packets;
   );
 //==============================================================================
 
-
-  assign ld_obuf_ext_done = (single_ld_iter_flag ? axi_rd_done : (ld_received_data_flag && last_ld_iter));
+  // Rohan: changed this to make it similar to ibuf logic
+  //assign ld_obuf_ext_done = (single_ld_iter_flag ? axi_rd_done : (ld_received_data_flag && last_ld_iter));
+  assign ld_obuf_ext_done = (single_ld_iter_flag ? (ld_received_data_flag && axi_rd_done_d) : (ld_received_data_flag && last_ld_iter));
+  
+  
   //assign st_obuf_ext_done = (single_st_iter_flag ? axi_wr_done : (st_sent_data_flag && last_st_iter));
-  assign st_obuf_ext_done = (single_st_iter_flag ? axi_wr_done : st_sent_data_flag && last_st_iter);
+  //assign st_obuf_ext_done = (single_st_iter_flag ? axi_wr_done : st_sent_data_flag && last_st_iter);
+  
+  assign st_obuf_ext_done = (single_st_iter_flag ? mws_bvalid : st_sent_data_flag && last_st_iter);
   
 
 //==============================================================================
@@ -2008,8 +2230,8 @@ assign st_sent_data_flag = to_send_packets == sent_packets;
 //  assign  tag_buf_ext_write_addr = {ldmem_tag, buf_ext_write_addr};   
   genvar i;
   generate
-    for (i=0; i<BUF_WRITE_GROUP_SIZE_EXT; i=i+1) begin
-        assign group_buf_ext_write_addr[(i+1)*BUF_ADDR_W-1: i*BUF_ADDR_W] = buf_ext_write_addr;     
+    for (i=0; i<ARRAY_M; i=i+1) begin
+        assign group_buf_ext_write_addr[((i+1)*BUF_ADDR_W)-1 : i*BUF_ADDR_W] = buf_ext_write_addr;     
     end
   endgenerate
   
@@ -2021,7 +2243,7 @@ assign st_sent_data_flag = to_send_packets == sent_packets;
 
   genvar j;
   generate
-      for (j=0; j<BUF_WRITE_GROUP_SIZE_EXT; j=j+1) begin
+      for (j=0; j<ARRAY_M; j=j+1) begin
           assign group_buf_ext_write_req[j] = buf_ext_write_req;
       end
   endgenerate
@@ -2029,7 +2251,8 @@ assign st_sent_data_flag = to_send_packets == sent_packets;
   genvar k;
   generate
       for (k=0; k<BUF_WRITE_NUM_GROUP_EXT; k=k+1) begin
-            assign buf_ext_write_req_out[(k+1)*BUF_WRITE_GROUP_SIZE_EXT-1: (k)*BUF_WRITE_GROUP_SIZE_EXT] = (buf_write_ext_counter_group == k) ? group_buf_ext_write_req : 0;
+            //assign buf_ext_write_req_out[(k+1)*BUF_WRITE_NUM_GROUP_EXT-1: (k)*BUF_WRITE_NUM_GROUP_EXT] = (buf_write_ext_counter_group == k) ? group_buf_ext_write_req : 0;
+            assign buf_ext_write_req_out[(k+1)*ARRAY_M - 1: (k)*ARRAY_M] = (buf_write_ext_counter_group == k) ? group_buf_ext_write_req : 0;
       end
   endgenerate
 //============================================================================== 
@@ -2107,7 +2330,8 @@ assign st_sent_data_flag = to_send_packets == sent_packets;
   */
   generate
       for (k=0; k<BUF_READ_NUM_GROUP_EXT; k=k+1) begin
-              assign buf_ext_read_req_out[(k+1)*BUF_READ_GROUP_SIZE_EXT-1: (k)*BUF_READ_GROUP_SIZE_EXT] = (buf_read_ext_counter_group == k) ? group_buf_ext_read_req : 0;
+ //             assign buf_ext_read_req_out[(k+1)*BUF_READ_GROUP_SIZE_EXT-1: (k)*BUF_READ_GROUP_SIZE_EXT] = (buf_read_ext_counter_group == k) ? group_buf_ext_read_req : 0;
+                assign buf_ext_read_req_out[(k+1)*BUF_READ_GROUP_SIZE_ARRAY_EXT-1: (k)*BUF_READ_GROUP_SIZE_ARRAY_EXT] = (buf_read_ext_counter_group == k) ? group_buf_ext_read_req[ARRAY_M-1:0] : 0;
       end
   endgenerate
 

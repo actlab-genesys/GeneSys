@@ -21,19 +21,23 @@ module genesys_top_module #(
     parameter integer  OBUF_CAPACITY_BITS           = 524288*2,
     parameter integer  BBUF_CAPACITY_BITS           = 16384,
 
-
-  // IBUF
+    // IBUF
     parameter integer IBUF_BANK_DEPTH               = 2048,
     parameter integer IBUF_READ_LATENCY_B           = 1,
 
-  // WBUF
+    // WBUF
     parameter integer  WBUF_BANK_DEPTH              = 4096, 
     parameter integer  WBUF_READ_WIDTH              = 8,
     parameter integer  WBUF_READ_LATENCY_B          = 1,
-  // OBUF
   
-    parameter integer OBUF_BANK_DEPTH             = 2048,
-    parameter integer OBUF_READ_LATENCY_B         = 1,
+    // BBUF
+    parameter integer  BBUF_BANK_DEPTH              = 2048, 
+    parameter integer  BBUF_READ_WIDTH              = BIAS_WIDTH,
+    parameter integer  BBUF_READ_LATENCY_B          = 1,
+
+    // OBUF
+    parameter integer OBUF_BANK_DEPTH               = 2048,
+    parameter integer OBUF_READ_LATENCY_B           = 1,
   
   // Instructions
     parameter integer  INST_DATA_WIDTH              = 32,
@@ -257,6 +261,12 @@ module genesys_top_module #(
     localparam integer  WBUF_WRITE_ADDR_WIDTH        = $clog2(WBUF_MEMORY_SIZE/WBUF_WRITE_WIDTH);
     localparam integer  WBUF_READ_ADDR_WIDTH         = $clog2(WBUF_MEMORY_SIZE/WBUF_READ_WIDTH);
     
+    localparam integer  BBUF_NUM_BANKS               = ARRAY_M;
+    localparam integer  BBUF_WRITE_WIDTH             = PARAMBUF_AXI_DATA_WIDTH/BBUF_NUM_BANKS;
+    localparam integer  BBUF_MEMORY_SIZE             = BBUF_BANK_DEPTH * BBUF_WRITE_WIDTH;
+    localparam integer  BBUF_WRITE_ADDR_WIDTH        = $clog2(BBUF_MEMORY_SIZE/BBUF_WRITE_WIDTH);
+    localparam integer  BBUF_READ_ADDR_WIDTH         = $clog2(BBUF_MEMORY_SIZE/BBUF_READ_WIDTH);
+    
     //localparam integer OBUF_WRITE_WIDTH_A            = OBUF_AXI_DATA_WIDTH/ARRAY_M;
     localparam integer OBUF_DATA_WIDTH                     = ACC_WIDTH;
     localparam integer OBUF_READ_WIDTH                     = ACC_WIDTH;
@@ -270,7 +280,7 @@ module genesys_top_module #(
     localparam integer  IBUF_TAG_ADDR_WIDTH          = IBUF_READ_ADDR_WIDTH;
     localparam integer  OBUF_TAG_ADDR_WIDTH          = OBUF_READ_ADDR_WIDTH;
     localparam integer  WBUF_TAG_ADDR_WIDTH          = WBUF_READ_ADDR_WIDTH;
-    localparam integer  BBUF_TAG_ADDR_WIDTH          = $clog2(BBUF_CAPACITY_BITS / ARRAY_M / BIAS_WIDTH);
+    localparam integer  BBUF_TAG_ADDR_WIDTH          = $clog2((BBUF_MEMORY_SIZE * 8) / ARRAY_M / BIAS_WIDTH);
 
     localparam integer  IBUF_ADDR_WIDTH              = IBUF_TAG_ADDR_WIDTH - TAG_W;
     localparam integer  WBUF_ADDR_WIDTH              = WBUF_TAG_ADDR_WIDTH - TAG_W;
@@ -385,7 +395,7 @@ module genesys_top_module #(
     wire  [ IBUF_TAG_ADDR_WIDTH   -1 : 0]        ibuf_read_addr_in;
     wire  [ ARRAY_N               -1 : 0]        sys_ibuf_read_req;
     wire  [ ARRAY_N*IBUF_TAG_ADDR_WIDTH-1:0]     sys_ibuf_read_addr;
-    wire  [ DATA_WIDTH*ARRAY_N    -1: 0]         ibuf_read_data;
+    wire  [ IBUF_READ_WIDTH*ARRAY_N    -1: 0]    ibuf_read_data;
 
     wire  [ ARRAY_M              -1 : 0]         sys_bias_read_req;
     wire  [ BBUF_TAG_ADDR_WIDTH*ARRAY_M-1 :0]    sys_bias_read_addr;
@@ -396,8 +406,8 @@ module genesys_top_module #(
     wire                                         wbuf_read_req_in;
     wire  [ WBUF_TAG_ADDR_WIDTH  -1 : 0 ]        wbuf_read_addr_in;
     wire  [ WBUF_REQ_WIDTH*ARRAY_N       -1 : 0 ]        wbuf_write_req;
-    wire  [ WBUF_TAG_ADDR_WIDTH*ARRAY_N  -1 : 0 ]        wbuf_write_addr;
-    wire  [ DATA_WIDTH*ARRAY_N           -1 : 0 ]        wbuf_write_data;
+    wire  [ WBUF_WRITE_ADDR_WIDTH*ARRAY_N  -1 : 0 ]        wbuf_write_addr;
+    wire  [ WBUF_WRITE_WIDTH*ARRAY_N           -1 : 0 ]        wbuf_write_data;
 
     wire  [ ARRAY_M*ACC_WIDTH    -1 : 0 ]        obuf_read_data;
     wire  [ OBUF_ADDR_WIDTH  -1 : 0 ]            obuf_read_addr_in;
@@ -416,14 +426,14 @@ module genesys_top_module #(
     //wire                                         parambuf_tag_done;
     wire                                         parambuf_compute_ready;
     wire  [ ARRAY_M               -1 : 0 ]       bbuf_write_req_out;
-    wire  [ ARRAY_M*BBUF_TAG_ADDR_WIDTH-1 : 0 ]  bbuf_write_addr_out;
-    wire  [ ARRAY_M*BIAS_WIDTH    -1 : 0 ]       bbuf_write_data_out;
+    wire  [ ARRAY_M*BBUF_WRITE_ADDR_WIDTH-1 : 0 ]  bbuf_write_addr_out;
+    wire  [ ARRAY_M*BBUF_WRITE_WIDTH    -1 : 0 ]       bbuf_write_data_out;
 
     wire                                         ibuf_tag_ready;
     
     wire  [ ARRAY_N              -1 : 0 ]        ibuf_write_req_out;
-    wire  [ ARRAY_N*IBUF_TAG_ADDR_WIDTH -1 : 0 ] ibuf_write_addr_out;
-    wire  [ ARRAY_N*DATA_WIDTH   -1 : 0 ]        ibuf_write_data_out;
+    wire  [ ARRAY_N*IBUF_WRITE_ADDR_WIDTH -1 : 0 ] ibuf_write_addr_out;
+    wire  [ ARRAY_N*IBUF_WRITE_WIDTH   -1 : 0 ]  ibuf_write_data_out;
 
     wire                                         obuf_tag_ready;
 
@@ -749,6 +759,10 @@ module genesys_top_module #(
         .LOOP_ID_W                  ( LOOP_ID_W                 ),
         .BUF_TYPE_W                 ( BUF_TYPE_W                ),
         .NUM_TAGS                   ( NUM_TAGS                  ),
+        .WBUF_WRITE_WIDTH           (WBUF_WRITE_WIDTH           ),
+        .BBUF_WRITE_WIDTH           (BBUF_WRITE_WIDTH           ),
+        .WBUF_WRITE_ADDR_WIDTH      (WBUF_WRITE_ADDR_WIDTH      ),
+        .BBUF_WRITE_ADDR_WIDTH      (BBUF_WRITE_ADDR_WIDTH      ),
         .WGT_DATA_WIDTH             ( DATA_WIDTH                ),
         .BIAS_DATA_WIDTH            ( BIAS_WIDTH                ),
         .AXI_ADDR_WIDTH             ( AXI_ADDR_WIDTH            ),
@@ -758,7 +772,9 @@ module genesys_top_module #(
         .WBUF_ADDR_W                ( WBUF_ADDR_WIDTH           ),
         .BBUF_ADDR_W                ( BBUF_ADDR_WIDTH           ),
         .INST_GROUP_ID_W            ( INST_GROUP_ID_W           ),
-        .GROUP_ENABLED              ( GROUP_ENABLED             )
+        .GROUP_ENABLED              ( GROUP_ENABLED             ),
+        .WBUF_READ_ADDR_WIDTH       (WBUF_READ_ADDR_WIDTH       ),
+        .BBUF_READ_ADDR_WIDTH       (BBUF_READ_ADDR_WIDTH       )
     ) parambuf_interface_inst (
         .clk                        ( clk                       ),
         .reset                      ( reset                     ),
@@ -858,10 +874,16 @@ module genesys_top_module #(
 // Bias Buffer (BBUF)
 //=============================================================
 
-    banked_scratchpad #(
-        .DATA_WIDTH                 ( BIAS_WIDTH                    ),
-        .ADDR_WIDTH                 ( BBUF_TAG_ADDR_WIDTH           ),
-        .NUM_BANKS                  ( ARRAY_M                       )
+    bias_buffer #(
+        .DDR_BANDWIDTH     (PARAMBUF_AXI_DATA_WIDTH  ),
+        .NUM_BANKS         (BBUF_NUM_BANKS           ),
+        .READ_WIDTH        (BBUF_READ_WIDTH          ),
+        .BUFFER_DEPTH      (BBUF_BANK_DEPTH          ),
+        .READ_LATENCY_B    (BBUF_READ_LATENCY_B      ),
+        .WRITE_WIDTH       (BBUF_WRITE_WIDTH         ),
+        .MEMORY_SIZE       (BBUF_MEMORY_SIZE         ),
+        .WRITE_ADDR_WIDTH  (BBUF_WRITE_ADDR_WIDTH    ),  
+        .READ_ADDR_WIDTH   (BBUF_READ_ADDR_WIDTH     )
     ) bbuf (
         .clk                        ( clk                           ),
         .reset                      ( reset                         ),
@@ -891,6 +913,10 @@ module genesys_top_module #(
         .INST_GROUP_ID_W            ( INST_GROUP_ID_W               ),
         .AXI_ADDR_WIDTH             ( AXI_ADDR_WIDTH                ),
         .AXI_DATA_WIDTH             ( IBUF_AXI_DATA_WIDTH           ),
+        .IBUF_WRITE_WIDTH           ( IBUF_WRITE_WIDTH              ),
+        .IBUF_WRITE_ADDR_WIDTH      ( IBUF_WRITE_ADDR_WIDTH         ),
+        .IBUF_READ_WIDTH            ( IBUF_READ_WIDTH               ),
+        .IBUF_READ_ADDR_WIDTH       ( IBUF_READ_ADDR_WIDTH          ),
         .AXI_BURST_WIDTH            ( AXI_BURST_WIDTH               ),
         .WSTRB_W                    ( IBUF_WSTRB_WIDTH              ),
         .ARRAY_N                    ( ARRAY_N                       ),
@@ -1149,9 +1175,8 @@ module genesys_top_module #(
     obuf_wrapper #(
         .NUM_TAGS                   ( NUM_TAGS                      ),
         .ARRAY_M                    ( ARRAY_M                       ),
-        
-        .OBUF_DDR_BANDWIDTH         (OBUF_AXI_DATA_WIDTH            ),  
-        .OBUF_DATA_WIDTH            (OBUF_DATA_WIDTH                ),   
+        .OBUF_DATA_WIDTH                 ( ACC_WIDTH                     ),
+        .OBUF_DDR_BANDWIDTH         (OBUF_AXI_DATA_WIDTH            ),         
         .OBUF_READ_WIDTH            (OBUF_READ_WIDTH                ),   
         .OBUF_BUFFER_DEPTH          (OBUF_BANK_DEPTH                ),   
         .OBUF_READ_LATENCY_B        (OBUF_READ_LATENCY_B            ),  

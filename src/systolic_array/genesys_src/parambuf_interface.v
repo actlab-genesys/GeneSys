@@ -42,23 +42,40 @@ module parambuf_interface #(
     parameter integer  WBUF_ADDR_W                  = 16,
     parameter integer  BBUF_ADDR_W					= 16,
    
-    parameter integer  TAG_WBUF_ADDR_W              = WBUF_ADDR_W + TAG_W,
-    parameter integer  TAG_BBUF_ADDR_W  			= BBUF_ADDR_W + TAG_W,
-   
-    parameter integer  WBUF_REQ_WIDTH 				= $clog2(ARRAY_M) + 1, 
-    parameter integer  WBUF_WRITE_GROUP_SIZE		= AXI_DATA_WIDTH / WGT_DATA_WIDTH,
-    parameter integer  NUM_WBUF_WRITE_GROUPS		= ARRAY_N / WBUF_WRITE_GROUP_SIZE,
+    parameter integer  WBUF_WRITE_ADDR_WIDTH 				= 8, 
+    parameter integer  BBUF_WRITE_ADDR_WIDTH 				= 8, 
+
+    //parameter integer  TAG_WBUF_ADDR_W              = WBUF_ADDR_W + TAG_W,
+    //parameter integer  TAG_BBUF_ADDR_W  			      = BBUF_ADDR_W + TAG_W,
     
-    parameter integer  BBUF_WRITE_DATA_W		    = ARRAY_M * BIAS_DATA_WIDTH,
-    parameter integer  BBUF_WRITE_ADDR_W			= ARRAY_M * TAG_BBUF_ADDR_W,
+    parameter integer  TAG_WBUF_ADDR_W              = WBUF_WRITE_ADDR_WIDTH,
+    parameter integer  TAG_BBUF_ADDR_W  			       = BBUF_WRITE_ADDR_WIDTH,
+    parameter integer  WBUF_WRITE_ADDR_WIDTH_NOTAG	 = TAG_WBUF_ADDR_W - TAG_W, 
+    parameter integer  BBUF_WRITE_ADDR_WIDTH_NOTAG	 = TAG_BBUF_ADDR_W - TAG_W, 
+   
+    
+    parameter integer  WBUF_WRITE_WIDTH 				    = 8, 
+    parameter integer  BBUF_WRITE_WIDTH 				    = 32, 
+        
+    parameter integer  WBUF_REQ_WIDTH 				= $clog2(ARRAY_M) + 1, 
+    //parameter integer  WBUF_WRITE_GROUP_SIZE		= AXI_DATA_WIDTH / WGT_DATA_WIDTH,
+    parameter integer  WBUF_WRITE_GROUP_SIZE		= AXI_DATA_WIDTH / WBUF_WRITE_WIDTH,
+    parameter integer  NUM_WBUF_WRITE_GROUPS		= ARRAY_N < WBUF_WRITE_GROUP_SIZE ? 1 : ARRAY_N / WBUF_WRITE_GROUP_SIZE,
+    
+    parameter integer  BBUF_WRITE_DATA_W		  = ARRAY_M * BBUF_WRITE_WIDTH,
+    parameter integer  BBUF_WRITE_ADDR_W			= ARRAY_M * BBUF_WRITE_ADDR_WIDTH,
     parameter integer  BBUF_WRITE_REQ_W				= ARRAY_M,
     
     parameter integer BBUF_WRITE_GROUP_SIZE			= AXI_DATA_WIDTH / BIAS_DATA_WIDTH,
-    parameter integer NUM_BBUF_WRITE_GROUPS			= ARRAY_M / BBUF_WRITE_GROUP_SIZE,
+    parameter integer BBUF_WRITE_GROUP_ARRAY_SIZE   = ARRAY_M < BBUF_WRITE_GROUP_SIZE ? ARRAY_M : BBUF_WRITE_GROUP_SIZE,
+    parameter integer NUM_BBUF_WRITE_GROUPS			= ARRAY_M < BBUF_WRITE_GROUP_SIZE ? 1 : ARRAY_M / BBUF_WRITE_GROUP_SIZE,
     
     parameter integer INST_GROUP_ID_W               = 4   ,
     parameter integer  STORE_ENABLED                = 0,
-    parameter integer  GROUP_ENABLED                = 0
+    parameter integer  GROUP_ENABLED                = 0,
+    parameter integer WBUF_READ_ADDR_WIDTH          = 8,
+    parameter integer BBUF_READ_ADDR_WIDTH          = 8
+
  ) (
     input  wire                                         clk,
     input  wire                                         reset,
@@ -119,20 +136,22 @@ module parambuf_interface #(
     input  wire                                         wbuf_read_req,
     input  wire  [ WBUF_ADDR_W           -1 : 0 ]       wbuf_read_addr,  
     output wire                                         wbuf_read_req_out,
-    output wire  [ TAG_WBUF_ADDR_W       -1 : 0 ]       wbuf_read_addr_out,
+    output wire  [ WBUF_READ_ADDR_WIDTH       -1 : 0 ]  wbuf_read_addr_out,
   // Write to Wbuf
     output wire  [ WBUF_REQ_WIDTH*ARRAY_N -1 : 0 ]      wbuf_write_req_out,
-    output wire  [ TAG_WBUF_ADDR_W*ARRAY_N -1 : 0 ]     wbuf_write_addr_out,
-    output wire  [ WGT_DATA_WIDTH*ARRAY_N     -1 : 0 ]  wbuf_write_data_out,
+    output wire  [ WBUF_WRITE_ADDR_WIDTH*ARRAY_N -1 : 0 ]     wbuf_write_addr_out,
+    output wire  [ WBUF_WRITE_WIDTH*ARRAY_N     -1 : 0 ]  wbuf_write_data_out,
   // RD signals get augmented with the compute tag and then go to SA for syncronization. From there they will go BBUF to read data
     input  wire   										bbuf_read_req,
     input  wire  [ BBUF_ADDR_W           -1 : 0 ]		bbuf_read_addr,
     output wire  										bbuf_read_req_out,
-    output wire  [ TAG_BBUF_ADDR_W 	     -1 : 0 ]		bbuf_read_addr_out,
+    output wire  [ BBUF_READ_ADDR_WIDTH 	     -1 : 0 ]		bbuf_read_addr_out,
     
+
+    // this already accounted for ARRAY_M during declaration
     output wire  [ BBUF_WRITE_REQ_W		 -1 : 0 ]       bbuf_write_req_out,
-    output wire  [ BBUF_WRITE_ADDR_W     -1 : 0 ]       bbuf_write_addr_out,
-    output wire  [ BBUF_WRITE_DATA_W     -1 : 0 ]       bbuf_write_data_out,
+    output wire  [ BBUF_WRITE_ADDR_W   -1 : 0 ]       bbuf_write_addr_out,
+    output wire  [ BBUF_WRITE_DATA_W   -1 : 0 ]       bbuf_write_data_out,
     
     
  // TODO: double check and make sure this is correct
@@ -201,10 +220,10 @@ module parambuf_interface #(
     localparam integer      GROUP_START              = 0;
     localparam integer      GROUP_END                = 1;
 	
-	localparam integer  COUNTER_GROUP_WIDTH			 = $clog2(NUM_WBUF_WRITE_GROUPS) + 1;
-	localparam integer  COUNTER_COL_WIDTH			 = $clog2(ARRAY_M);
+	  localparam integer  COUNTER_GROUP_WIDTH			 = $clog2(NUM_WBUF_WRITE_GROUPS) + 1;
+	  localparam integer  COUNTER_COL_WIDTH			 = $clog2(ARRAY_M);
 	
-	localparam integer  COUNTER_BBUF_GROUP_WIDTH     = $clog2(NUM_BBUF_WRITE_GROUPS) + 1;
+	  localparam integer  COUNTER_BBUF_GROUP_WIDTH     = $clog2(NUM_BBUF_WRITE_GROUPS) + 1;
 
 	
 //==============================================================================
@@ -977,6 +996,48 @@ assign bbuf_ldmem_tag_ready_sm = wbuf_ldmem_state_q == LDMEM_DONE ? bbuf_ldmem_t
 //
 
 
+
+// counter to count number of ibuf load done
+/*
+  wire axi_rd_done_q, axi_rd_done_pulse;
+  reg [7:0] num_wbuf_loads;
+  register_sync #(1) axi_rd_done_q_reg (clk, reset, axi_rd_done, axi_rd_done_q);
+  assign axi_rd_done_pulse = axi_rd_done & ~axi_rd_done_q;
+  always @(posedge clk) begin
+    if (reset)
+      num_wbuf_loads <= 0;
+    else if (axi_rd_done_pulse == 1)
+      num_wbuf_loads <= num_wbuf_loads + 1;
+  end
+
+  ila_0 parambuf_ila (
+  .clk(clk),
+  // 1 bit width
+  .probe0(wbuf_tag_req),
+  .probe1(wbuf_tag_ready),
+  .probe2(bbuf_tag_req),
+  .probe3(bbuf_tag_ready),
+  .probe4(axi_rd_req),
+  .probe5(axi_rd_done),
+  // 8 bit width
+  .probe6(wbuf_ldmem_state_q),
+  .probe7(num_wbuf_loads),
+  .probe8(bbuf_ldmem_state_q),
+  .probe9(0),
+  .probe10(0),
+  // 32 bit width
+  .probe11(axi_rd_addr[31:0]),
+  .probe12(axi_rd_addr[63:32]),
+  .probe13(axi_rd_req_size),
+  .probe14(0),
+  .probe15(0),
+  .probe16(0),
+  .probe17(0),
+  .probe18(0),
+  .probe19(0)
+  );
+  */
+
     //wire bbuf_tag_reuse_qq;
     //register_sync #(1) bbuf_tag_reuse_reg (clk, reset, bbuf_tag_reuse_q, bbuf_tag_reuse_qq);
     
@@ -1197,10 +1258,10 @@ assign bbuf_ldmem_tag_ready_sm = wbuf_ldmem_state_q == LDMEM_DONE ? bbuf_ldmem_t
 
 
   reg [ COUNTER_GROUP_WIDTH     -1 : 0 ] 		wbuf_counter_group;
-  reg [ WBUF_ADDR_W				-1 : 0 ]		wbuf_counter_write_addr;
+  reg [ WBUF_WRITE_ADDR_WIDTH_NOTAG				-1 : 0 ]		wbuf_counter_write_addr;
   reg [ COUNTER_COL_WIDTH		-1 : 0 ]        wbuf_counter_write_col;
   
-  wire [ WBUF_ADDR_W             -1 : 0 ]        _wbuf_write_addr;
+  wire [ WBUF_WRITE_ADDR_WIDTH_NOTAG             -1 : 0 ]        _wbuf_write_addr;
   wire [ TAG_WBUF_ADDR_W         -1 : 0 ]        tag_wbuf_write_addr;
   wire [ WBUF_WRITE_GROUP_SIZE*TAG_WBUF_ADDR_W-1 : 0]  group_tag_wbuf_write_addr;
   wire [ WBUF_WRITE_GROUP_SIZE*WBUF_REQ_WIDTH-1 : 0]  group_wbuf_write_req;
@@ -1308,9 +1369,9 @@ assign bbuf_ldmem_tag_ready_sm = wbuf_ldmem_state_q == LDMEM_DONE ? bbuf_ldmem_t
 
 
   reg [ COUNTER_BBUF_GROUP_WIDTH     -1 : 0 ]   bbuf_counter_group;
-  reg [ BBUF_ADDR_W				-1 : 0 ]		bbuf_counter_write_addr;
+  reg [ BBUF_WRITE_ADDR_WIDTH_NOTAG				-1 : 0 ]		bbuf_counter_write_addr;
   
-  wire [ BBUF_ADDR_W             -1 : 0 ]        _bbuf_write_addr;
+  wire [ BBUF_WRITE_ADDR_WIDTH_NOTAG             -1 : 0 ]        _bbuf_write_addr;
   wire [ TAG_BBUF_ADDR_W         -1 : 0 ]        tag_bbuf_write_addr;
   wire [ BBUF_WRITE_GROUP_SIZE*TAG_BBUF_ADDR_W-1 : 0]  group_tag_bbuf_write_addr;
   wire [ BBUF_WRITE_GROUP_SIZE   -1 : 0]               group_bbuf_write_req;
@@ -1373,7 +1434,8 @@ assign bbuf_ldmem_tag_ready_sm = wbuf_ldmem_state_q == LDMEM_DONE ? bbuf_ldmem_t
   
   generate
 	  for (k=0; k<NUM_BBUF_WRITE_GROUPS; k=k+1) begin
-			  assign bbuf_write_req_out[(k+1)*BBUF_WRITE_GROUP_SIZE-1: (k)*BBUF_WRITE_GROUP_SIZE] = (bbuf_counter_group == k) ? {BBUF_WRITE_GROUP_SIZE{_bbuf_write_req}} :0;
+		//	  assign bbuf_write_req_out[(k+1)*BBUF_WRITE_GROUP_SIZE-1: (k)*BBUF_WRITE_GROUP_SIZE] = (bbuf_counter_group == k) ? {BBUF_WRITE_GROUP_SIZE{_bbuf_write_req}} :0;
+	       assign bbuf_write_req_out[(k+1)*BBUF_WRITE_GROUP_ARRAY_SIZE-1: (k)*BBUF_WRITE_GROUP_ARRAY_SIZE] = (bbuf_counter_group == k) ? {BBUF_WRITE_GROUP_ARRAY_SIZE{_bbuf_write_req}} :0;
 	  end
   endgenerate
 

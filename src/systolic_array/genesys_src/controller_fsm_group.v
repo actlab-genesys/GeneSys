@@ -34,6 +34,7 @@ module controller_fsm_group #(
 );
 
     localparam MAX_GROUPS = (GROUP_ENABLED == 1) ? NUM_MAX_GROUPS : 1 ;
+    localparam NUM_MAX_LOOPS_OPT = (NUM_MAX_LOOPS > 16) ? 16 : NUM_MAX_LOOPS ;
 	
 	reg start_d,loop_done;	
     reg [LOOP_ITER_W-1:0] iters[0:NUM_MAX_LOOPS-1];
@@ -51,7 +52,8 @@ module controller_fsm_group #(
 	
 	wire  [ GROUP_ID_W           -1 : 0 ]        cfg_loop_group_id_in;
   
-  wire  [ GROUP_ID_W           -1 : 0 ]        loop_group_id_in;
+    wire  [ GROUP_ID_W           -1 : 0 ]        loop_group_id_in;
+    wire  [NUM_MAX_LOOPS_OPT-1:0]  comp_max_iter ;
   
       generate
       if(GROUP_ENABLED == 1) begin
@@ -71,7 +73,11 @@ module controller_fsm_group #(
 	assign load_new_group = loop_group_id_in != prev_group_id;
 	
 	always @(posedge clk) 
-	   iter_done_d <= iter_done[0];
+      iter_done_d <= iter_done[0];
+      //  if (reset || done)
+      //      iter_done_d <= 0;
+      //  else if (iter_done[0])
+      //      iter_done_d <= iter_done[0];
 //	assign counter_w = 
 	
 	generate
@@ -125,7 +131,8 @@ module controller_fsm_group #(
 	end
 	endgenerate
 	
-    assign iter_done[NUM_MAX_LOOPS] = 1'b1;
+		
+    assign iter_done[NUM_MAX_LOOPS:NUM_MAX_LOOPS_OPT] = {(NUM_MAX_LOOPS-NUM_MAX_LOOPS_OPT+1){1'b1}}; //Lavanya: For better timing
     assign done = iter_done[0] && ~iter_done_d;
     
 
@@ -138,11 +145,23 @@ module controller_fsm_group #(
             loop_done <= 1'b1;
     end
     
+    generate
+    for(genvar i=0; i<NUM_MAX_LOOPS_OPT ;i=i+1) begin  //Lavanya: For better timing
+        assign comp_max_iter[i] = (iters[i] == max_iter[i])?1:0;
+    end
+    endgenerate
+    
+    generate
+    for(genvar i=0; i<NUM_MAX_LOOPS_OPT ;i=i+1) begin  //Lavanya: For better timing
+        assign iter_done[i] = &comp_max_iter[NUM_MAX_LOOPS_OPT-1:i];
+    end
+    endgenerate
+    
 	
     generate
     for(genvar i =0 ; i < NUM_MAX_LOOPS ; i = i +1) begin
         
-        assign iter_done[i] = (iters[i] == max_iter[i]) && iter_done[i+1];
+//        assign iter_done[i] = (iters[i] == max_iter[i]) && iter_done[i+1];
         
         always @(posedge clk) begin
             if(start) begin
@@ -178,4 +197,7 @@ module controller_fsm_group #(
         end
     end
     endgenerate
+    
 endmodule
+
+

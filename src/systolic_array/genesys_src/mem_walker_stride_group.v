@@ -42,6 +42,7 @@ module mem_walker_stride_group #(
 	reg [ADDR_STRIDE_W-1:0] group_loop_stride[0:MAX_GROUPS-1][0:NUM_MAX_LOOPS-1];
 
 	reg [ADDR_WIDTH-1:0] group_curr_address[0:MAX_GROUPS-1][0:NUM_MAX_LOOPS-1];
+	wire [NUM_MAX_LOOPS-1:0] loop_address_trigger [0:NUM_MAX_LOOPS-1];
 	reg [ADDR_WIDTH-1:0] loop_address[0:NUM_MAX_LOOPS-1];
 	reg [ADDR_WIDTH-1:0] loop_address_d[0:NUM_MAX_LOOPS-1];
     
@@ -128,9 +129,108 @@ module mem_walker_stride_group #(
 //    always @(posedge clk)
      assign  addr_out_valid_d = addr_gen_valid  && ~stall_d;
      //assign  addr_out_valid_d = addr_gen_valid  && ~stall; // rohan added
+     
+    
+    wire [ADDR_WIDTH-1:0]loop_address_add [NUM_MAX_LOOPS-1:0] ;
+    generate 
+    for(genvar i =0 ; i < NUM_MAX_LOOPS ; i = i +1) begin
+      assign  loop_address_add[i] = loop_address_d[i] + group_loop_stride[loop_group_id_in][i] ;
+    end
+    endgenerate
+    
+  //wire [NUM_MAX_LOOPS-1:0] loop_address_trigger [0:NUM_MAX_LOOPS-1]; 
     
     generate
     for(genvar i =0 ; i < NUM_MAX_LOOPS ; i = i +1) begin
+        for(genvar j =0 ; j <= i ; j = j +1) begin
+            if (j != i)
+                assign loop_address_trigger[i][j]= &iter_done[i:j+1] & ~iter_done[j];
+            else
+                assign loop_address_trigger[i][j]= iter_done[i+1] & ~iter_done[i];
+        end
+    end
+    endgenerate 
+    
+//    wire [NUM_MAX_LOOPS-1:0][ADDR_WIDTH-1:0]loop_address_in_temp[NUM_MAX_LOOPS-1:0];
+//    generate
+//        for(genvar i =0 ; i < NUM_MAX_LOOPS ; i = i +1) begin
+//            for(genvar j =0 ; j<=NUM_MAX_LOOPS ; j = j +1) begin 
+//                if (j<=i)           
+//                    assign loop_address_in_temp[i][j] =  (loop_address_trigger[i][j])?loop_address_add[j]:0;
+//                else 
+//                    assign loop_address_in_temp[i][j] = 0;
+//            end       
+//        end
+//    endgenerate
+    
+    reg [ADDR_WIDTH-1:0] loop_address_test [0:NUM_MAX_LOOPS-1];
+    generate
+        for(genvar i =0 ; i < NUM_MAX_LOOPS ; i = i +1) begin
+            for(genvar j =0 ; j<=i ; j = j +1) begin
+               // for(genvar k =0 ; j<NUM_MAX_LOOPS ; k = k +1) begin
+                always @( * ) begin 
+                        if (stall)
+                            loop_address_test[i] = 0;
+                        else      
+                            loop_address_test[i] =  loop_address_test[i] |({ {ADDR_WIDTH-1{loop_address_trigger[i][j]}}, loop_address_trigger[i][j] } & loop_address_add[j]) ;
+                //    end
+                end
+            end       
+        end
+    endgenerate
+//    
+    
+//    wire [ADDR_WIDTH-1:0]loop_address_input [NUM_MAX_LOOPS-1:0] ;
+//    generate
+//    for(genvar i =0 ; i < NUM_MAX_LOOPS ; i = i +1) begin
+//        for(genvar j =0 ; j<=i ; j = j +1) begin            
+//                assign loop_address_input[i] =  loop_address_trigger[i][j]&loop_address_add[j] ;
+//        end       
+//    end
+//    endgenerate
+////    generate
+////    for(genvar i =0 ; i < NUM_MAX_LOOPS ; i = i +1) begin
+////       for(genvar j =0 ; j < i ; j = j +1) begin
+////            assign loop_address_input[i] = loop_address_input[i] | ( loop_address_add[j] & {{ADDR_WIDTH-1{loop_address_trigger[i][j]}},loop_address_trigger[i][j]});
+            
+////       end
+////    end
+////    endgenerate 
+//    reg [ADDR_WIDTH-1:0] loop_address_debug [0:NUM_MAX_LOOPS-1];
+    generate
+    for(genvar i =0 ; i < NUM_MAX_LOOPS ; i = i +1) begin
+    
+//        assign loop_address[i] = (iter_done[0] || base_addr_v)?base_addr:
+//                                 (load_new_group)?group_curr_address[loop_group_id_in][i]:
+//                                 (~stall)?(iter_done[i])?(i == 0) ? 'd0 : loop_address[i-1]:
+//                                          (iter_done[i+1])?loop_address_d[i] + group_loop_stride[loop_group_id_in][i]:
+//                                          loop_address_d[i]:
+//                                  loop_address_d[i] ;
+//        assign loop_address[i] = (iter_done[0] || base_addr_v)?base_addr:
+//                                 (load_new_group)?group_curr_address[loop_group_id_in][i]:
+//                                 (~stall)?(iter_done[i]||iter_done[i+1])?loop_address_input[i]:
+//                                          loop_address_d[i]:
+//                                  loop_address_d[i] ;
+
+//        always @( * ) begin
+//            //loop_address[i] = 0;
+//            if( iter_done[0] || base_addr_v) begin
+//                loop_address[i] = base_addr;
+//            end
+//            else if( load_new_group) begin
+//                loop_address[i] = group_curr_address[loop_group_id_in][i];
+//            end
+//            else if (~stall) begin
+//                if(iter_done[i] || iter_done[i+1]) begin
+//                    loop_address[i] = loop_address_test[i];
+//                end
+//                else 
+//                    loop_address[i] = loop_address_d[i];
+//            end
+//            else begin
+//                loop_address[i] = loop_address_d[i];
+//            end
+//        end
         
         always @( * ) begin
             //loop_address[i] = 0;
@@ -189,3 +289,4 @@ module mem_walker_stride_group #(
     //assign addr_out_valid = addr_out_valid_d;
 
 endmodule
+

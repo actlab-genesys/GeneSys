@@ -584,6 +584,66 @@ module controller #(
     
     // sending the done handshake signal to host 
     assign ap_done = genesys_done;
+
+
+
+
+
+// Counter to count sa_compute_req
+
+  wire sa_compute_req_pulse, sa_compute_req_pulse_q;
+  reg [7:0] num_sa_compute_req;
+  register_sync #(1) sa_compute_req_pulse_reg (clk, reset, sa_compute_req, sa_compute_req_pulse_q);
+  assign sa_compute_req_pulse = sa_compute_req & ~sa_compute_req_pulse_q;
+  always @(posedge clk) begin
+    if (reset)
+      num_sa_compute_req <= 0;
+    else if (sa_compute_req_pulse == 1)
+      num_sa_compute_req <= num_sa_compute_req + 1;
+  end
+
+/*
+  ila_0 genesys_ila (
+  .clk(clk),
+  // 1 bit width
+  .probe0(sa_compute_req),
+  .probe1(genesys_done),
+  .probe2(ibuf_compute_ready),
+  .probe3(wbuf_compute_ready),
+  .probe4(obuf_compute_ready),
+  .probe5(bbuf_compute_ready),
+  // 8 bit width
+  .probe6(genesys_state_q),
+  .probe7(num_sa_compute_req),
+  .probe8(tm_state_q),
+  .probe9(0),
+  .probe10(0),
+  // 32 bit width
+  .probe11(0),
+  .probe12(0),
+  .probe13(0),
+  .probe14(0),
+  .probe15(0),
+  .probe16(0),
+  .probe17(0),
+  .probe18(0),
+  .probe19(0)
+  );
+  */
+/*
+// ILA monitoring combinatorial adder
+	ila_0 i_ila_0 (
+		.clk(ap_clk),              // input wire        clk
+		.probe0(sa_compute_req),           // input wire [0:0]  probe0  
+		.probe1(genesys_done), // input wire [0:0]  probe1 
+		.probe2(ibuf_compute_ready),   // input wire [0:0]  probe2 
+		.probe3(num_sa_compute_req),    // input wire [63:0] probe3 
+		.probe4(wbuf_compute_ready),     // input wire [0:0]  probe4 
+		.probe5(obuf_compute_ready),   // input wire [0:0]  probe5 
+		.probe6(genesys_state_q)       // input wire [31:0] probe6
+	);
+*/
+  
 //=============================================================
   // GROUPs and Sequence Configuration
 //=============================================================

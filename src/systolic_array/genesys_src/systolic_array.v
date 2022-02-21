@@ -69,9 +69,9 @@ module systolic_array #(
  
     input  wire  [ WBUF_REQ_WIDTH*ARRAY_N       -1 : 0 ]		wbuf_write_req,
 
-    input  wire  [ WBUF_ADDR_WIDTH*ARRAY_N      -1 : 0 ]		wbuf_write_addr,
+    input  wire  [ WBUF_WRITE_ADDR_WIDTH*ARRAY_N      -1 : 0 ]		wbuf_write_addr,
   
-    input  wire  [ WGT_WIDTH*ARRAY_N		    -1 : 0 ]		wbuf_write_data,
+    input  wire  [ WBUF_WRITE_WIDTH*ARRAY_N		    -1 : 0 ]		wbuf_write_data,
    
  // TODO: figure out the signals for obuf
     input  wire  [ OUT_WIDTH            -1 : 0 ]        obuf_read_data,
@@ -136,13 +136,13 @@ module systolic_array #(
 	wire	[WBUF_ADDR_WIDTH            -1: 0]			pe_wbuf_read_addr[ARRAY_N-1:0][ARRAY_M-1:0];	
 	wire	[WBUF_ADDR_WIDTH            -1: 0]			pe_wbuf_read_addr_frwrd[ARRAY_N-1:0][ARRAY_M-1:0];
 	
-	wire	[WGT_WIDTH		            -1: 0]			wbuf_write_data_frwrd[ARRAY_N-1:0][ARRAY_M-1:0];
-	wire	[WGT_WIDTH		            -1: 0]			wbuf_write_data_in[ARRAY_N-1:0][ARRAY_M-1:0];
-	wire	[WGT_WIDTH		            -1: 0]			pe_wbuf_write_data[ARRAY_N-1:0][ARRAY_M-1:0];
+	wire	[WBUF_WRITE_WIDTH		            -1: 0]			wbuf_write_data_frwrd[ARRAY_N-1:0][ARRAY_M-1:0];
+	wire	[WBUF_WRITE_WIDTH         -1: 0]			      wbuf_write_data_in[ARRAY_N-1:0][ARRAY_M-1:0];
+	wire	[WBUF_WRITE_WIDTH		            -1: 0]			pe_wbuf_write_data[ARRAY_N-1:0][ARRAY_M-1:0];
 	
-	wire	[WBUF_ADDR_WIDTH		    -1: 0]			wbuf_write_addr_frwrd[ARRAY_N-1:0][ARRAY_M-1:0];
-	wire	[WBUF_ADDR_WIDTH		    -1: 0]			wbuf_write_addr_in[ARRAY_N-1:0][ARRAY_M-1:0];
-	wire	[WBUF_ADDR_WIDTH		    -1: 0]			pe_wbuf_write_addr[ARRAY_N-1:0][ARRAY_M-1:0];
+	wire	[WBUF_WRITE_ADDR_WIDTH		    -1: 0]			wbuf_write_addr_frwrd[ARRAY_N-1:0][ARRAY_M-1:0];
+	wire	[WBUF_WRITE_ADDR_WIDTH		    -1: 0]			wbuf_write_addr_in[ARRAY_N-1:0][ARRAY_M-1:0];
+	wire	[WBUF_WRITE_ADDR_WIDTH		    -1: 0]			pe_wbuf_write_addr[ARRAY_N-1:0][ARRAY_M-1:0];
 	
 	wire	[WBUF_REQ_WIDTH		    -1: 0]			wbuf_write_req_en_frwrd[ARRAY_N-1:0][ARRAY_M-1:0];
 	wire	[WBUF_REQ_WIDTH		    -1: 0]			wbuf_write_req_en_in[ARRAY_N-1:0][ARRAY_M-1:0];
@@ -184,11 +184,6 @@ module systolic_array #(
 //    register_sync #(OBUF_ADDR_WIDTH) obuf_write_addr_reg2 (clk, reset, obuf_read_addr_q, obuf_read_addr_qq);
 //    assign obuf_write_addr = obuf_write_addr_in;
 
-    
-    
-    
-    
-    
     
     wire [ BBUF_ADDR_WIDTH      -1 : 0 ] bias_read_addr_q,bias_read_addr;
     wire bias_read_req_q,bias_read_req;
@@ -238,20 +233,20 @@ module systolic_array #(
 				assign				pe_wbuf_write_data[n][m]        =   		wbuf_write_data_frwrd[n][m];
 				
 				if( m == 0) 
-					assign				wbuf_write_data_in[n][m]        =   		wbuf_write_data[(n+1)*WGT_WIDTH-1: n*WGT_WIDTH];
+					assign				wbuf_write_data_in[n][m]        =   		wbuf_write_data[(n+1)*WBUF_WRITE_WIDTH-1: n*WBUF_WRITE_WIDTH];
 				else
 					assign				wbuf_write_data_in[n][m]        =   		wbuf_write_data_frwrd[n][m-1];
 				
-				register_sync #(WGT_WIDTH) wbuf_write_data_reg (clk, reset, wbuf_write_data_in[n][m], wbuf_write_data_frwrd[n][m]);
+				register_sync #(WBUF_WRITE_WIDTH) wbuf_write_data_reg (clk, reset, wbuf_write_data_in[n][m], wbuf_write_data_frwrd[n][m]);
 
 				assign				pe_wbuf_write_addr[n][m]        =   		wbuf_write_addr_frwrd[n][m];
 				
 				if( m == 0) 
-					assign				wbuf_write_addr_in[n][m]        =   		wbuf_write_addr[(n+1)*WBUF_ADDR_WIDTH-1:n*WBUF_ADDR_WIDTH];
+					assign				wbuf_write_addr_in[n][m]        =   		wbuf_write_addr[(n+1)*WBUF_WRITE_ADDR_WIDTH-1:n*WBUF_WRITE_ADDR_WIDTH];
 				else
 					assign				wbuf_write_addr_in[n][m]        =   		wbuf_write_addr_frwrd[n][m-1];
 					
-				register_sync #(WBUF_ADDR_WIDTH) wbuf_write_addr_reg (clk, reset, wbuf_write_addr_in[n][m], wbuf_write_addr_frwrd[n][m]);
+				register_sync #(WBUF_WRITE_ADDR_WIDTH) wbuf_write_addr_reg (clk, reset, wbuf_write_addr_in[n][m], wbuf_write_addr_frwrd[n][m]);
 
 				
 				assign				pe_wbuf_write_req_en[n][m]        =   		wbuf_write_req_en_frwrd[n][m];

@@ -9,21 +9,21 @@ outputs=out['N', 'OH', 'OW', 'OC']
 5	(OC)loop0[0]: START=0; STOP=128; STRIDE=64; OFFSET:0
 6		transfer1: OPERAND: bias[DRAM->BBUF], SIZES: [[128], [64]]
 7		(N)loop1[1]: START=0; STOP=1; STRIDE=1; OFFSET:0
-8			(IC)loop2[2]: START=0; STOP=64; STRIDE=64; OFFSET:0
-9				(KH)loop3[3]: START=0; STOP=1; STRIDE=1; OFFSET:0
-10					(KW)loop4[4]: START=0; STOP=1; STRIDE=1; OFFSET:0
-11						transfer0: OPERAND: weight[DRAM->WBUF], SIZES: [[1, 1, 64, 128], [1, 1, 64, 64]]
-12						(OH)loop5[5]: START=0; STOP=7; STRIDE=7; OFFSET:0
-13							(OW)loop6[6]: START=0; STOP=7; STRIDE=7; OFFSET:0
-14								transfer3: OPERAND: out[DRAM->OBUF], SIZES: [[1, 7, 7, 128], [1, 7, 7, 64]]
-15								transfer2: OPERAND: data[DRAM->IBUF], SIZES: [[1, 14, 14, 64], [1, 14, 14, 64]]
+8			(IC)loop2[2]: START=0; STOP=128; STRIDE=128; OFFSET:0
+9				(KH)loop3[3]: START=0; STOP=3; STRIDE=3; OFFSET:0
+10					(KW)loop4[4]: START=0; STOP=3; STRIDE=3; OFFSET:0
+11						transfer0: OPERAND: weight[DRAM->WBUF], SIZES: [[3, 3, 128, 128], [3, 3, 128, 64]]
+12						(OH)loop5[5]: START=0; STOP=10; STRIDE=5; OFFSET:0
+13							(OW)loop6[6]: START=0; STOP=10; STRIDE=5; OFFSET:0
+14								transfer3: OPERAND: out[DRAM->OBUF], SIZES: [[1, 10, 10, 128], [1, 5, 5, 64]]
+15								transfer2: OPERAND: data[DRAM->IBUF], SIZES: [[1, 12, 12, 128], [1, 7, 7, 128]]
 16								(OC)loop7[7]: START=0; STOP=64; STRIDE=1; OFFSET:0
 17									(N)loop8[8]: START=0; STOP=1; STRIDE=1; OFFSET:0
-18										(IC)loop9[9]: START=0; STOP=64; STRIDE=1; OFFSET:0
-19											(KH)loop10[10]: START=0; STOP=1; STRIDE=1; OFFSET:0
-20												(KW)loop11[11]: START=0; STOP=1; STRIDE=1; OFFSET:0
-21													(OH)loop12[12]: START=0; STOP=7; STRIDE=1; OFFSET:0
-22														(OW)loop13[13]: START=0; STOP=7; STRIDE=1; OFFSET:0
+18										(IC)loop9[9]: START=0; STOP=128; STRIDE=1; OFFSET:0
+19											(KH)loop10[10]: START=0; STOP=3; STRIDE=1; OFFSET:0
+20												(KW)loop11[11]: START=0; STOP=3; STRIDE=1; OFFSET:0
+21													(OH)loop12[12]: START=0; STOP=5; STRIDE=1; OFFSET:0
+22														(OW)loop13[13]: START=0; STOP=5; STRIDE=1; OFFSET:0
 23															compute0: pe_array-MVMUL(['data', 'weight', 'bias'])->['out']
 24														loop13: END
 25													loop12: END
@@ -32,7 +32,7 @@ outputs=out['N', 'OH', 'OW', 'OC']
 28										loop9: END
 29									loop8: END
 30								loop7: END
-31								transfer4: OPERAND: out[OBUF->DRAM], SIZES: [[1, 7, 7, 64], [1, 7, 7, 128]]
+31								transfer4: OPERAND: out[OBUF->DRAM], SIZES: [[1, 5, 5, 64], [1, 10, 10, 128]]
 32							loop6: END
 33						loop5: END
 34					loop4: END
