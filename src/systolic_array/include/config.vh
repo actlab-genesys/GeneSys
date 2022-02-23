@@ -2,109 +2,22 @@
 
 //////////////// From Compiler 
 `ifdef RESNET18_GEMM
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 1024;
-    parameter integer  OBUF_DEPTH                   = 1024;
-    parameter integer  WBUF_DEPTH                   = 2048;
-    parameter integer  ARRAY_N                      = 8;
-    parameter integer  ARRAY_M                      = 8;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif  RESNET18_GEMM_MULTIPLE_REQs
-    parameter integer  BBUF_DEPTH                   = 32;
-    parameter integer  IBUF_DEPTH                   = 64;
-    parameter integer  OBUF_DEPTH                   = 64;
-    parameter integer  WBUF_DEPTH                   = 128;
-    parameter integer  ARRAY_N                      = 8;
-    parameter integer  ARRAY_M                      = 8;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif RESNET50_CONV_V1
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 64;
-    parameter integer  ARRAY_M                      = 64;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif CONV_8x8_OC_OH_TILED
-    parameter integer  BBUF_DEPTH                   = 1024;
+    parameter integer  BBUF_DEPTH                   = 2048;
     parameter integer  IBUF_DEPTH                   = 8192;
-    parameter integer  OBUF_DEPTH                   = 4096;
+    parameter integer  OBUF_DEPTH                   = 8192;
     parameter integer  WBUF_DEPTH                   = 8192;
     parameter integer  ARRAY_N                      = 8;
     parameter integer  ARRAY_M                      = 8;
     parameter integer  INSTR_DEPTH                  = 1024;
-`elsif CUSTOM_CONV_NON_ALIGNED_REQ
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 8;
-    parameter integer  ARRAY_M                      = 8;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif CUSTOM_CONV_RANDOM_VALS_V3
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 8;
-    parameter integer  ARRAY_M                      = 8;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif CUSTOM_CONV_RANDOM_VALS
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 8;
-    parameter integer  ARRAY_M                      = 8;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif RESNET18_CONV
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 8;
-    parameter integer  ARRAY_M                      = 8;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif LENET_CONV
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 8;
-    parameter integer  ARRAY_M                      = 8;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif CUSTOM_CONV
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 8;
-    parameter integer  ARRAY_M                      = 8;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif CUSTOM_CONV_FIXED_RESULTS
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 8;
-    parameter integer  ARRAY_M                      = 8;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif CUSTOM_CONV_RANDOM_VALS
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 8;
-    parameter integer  ARRAY_M                      = 8;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`else // RESNET18-GEMM
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 1024;
-    parameter integer  OBUF_DEPTH                   = 1024;
-    parameter integer  WBUF_DEPTH                   = 2048;
-    parameter integer  ARRAY_N                      = 8;
-    parameter integer  ARRAY_M                      = 8;
-    parameter integer  INSTR_DEPTH                  = 1024;
+`else
+   parameter integer  BBUF_DEPTH                   = 2048;
+   parameter integer  IBUF_DEPTH                   = 8192;
+   parameter integer  OBUF_DEPTH                   = 8192;
+   parameter integer  WBUF_DEPTH                   = 8192;
+   parameter integer  ARRAY_N                      = 8;
+   parameter integer  ARRAY_M                      = 8;
+   parameter integer  INSTR_DEPTH                  = 1024;
+
 `endif
 
 
