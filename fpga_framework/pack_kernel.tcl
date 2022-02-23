@@ -18,49 +18,49 @@ set cwd [lindex $argv 2]
 
 # add design sources into project
 #Using subst is not good practice, keep now for ease of use
-add_files $src_path/../fpga_framework/config.vh
-add_files [subst { $src_path/source/genesys_src/tag_sync.v \
-   $src_path/source/genesys_src/pe.v \
-   $src_path/source/genesys_src/compute_addr_gen.v \
-   $src_path/source/genesys_src/signed_adder.v \
-   $src_path/source/genesys_src/systolic_array.v \
-   $src_path/source/genesys_src/base_addr_gen.v \
-   $src_path/source/genesys_src/tag_logic.v \
-   $src_path/source/genesys_src/mem_walker_stride_group.v \
-   $src_path/source/genesys_src/weight_buffer.v \
-   $src_path/source/genesys_src/bias_buffer.v \
-   $src_path/source/genesys_src/instruction_memory.v \
-   $src_path/source/genesys_src/ram_asymmetric.v \
-   $src_path/source/genesys_src/parambuf_interface.v  
-   $src_path/source/genesys_src/genesys_top_module.v \
-   $src_path/source/genesys_src/obuf_interface.v \
-   $src_path/source/genesys_src/decoder.v \
-   $src_path/source/genesys_src/ram.v \
-   $src_path/source/genesys_src/truncator.v \
-   $src_path/source/genesys_src/controller_fsm_group.v \
-   $src_path/source/genesys_src/fifo.v \
-   $src_path/source/genesys_src/obuf.v \
-   $src_path/source/genesys_src/obuf_wrapper.v \
-   $src_path/source/genesys_src/ibuf_data_shuffler.v \
-   $src_path/source/genesys_src/ibuf.v \
-   $src_path/source/genesys_src/ibuf_interface.v \
-   $src_path/source/genesys_src/instruction_memory_wrapper.v \
-   $src_path/source/genesys_src/controller.sv \
-   $src_path/source/genesys_src/register_sync.v \
-   $src_path/source/genesys_src/macc.v \
-   $src_path/source/genesys_src/mem_request_splitter.sv \
-   $src_path/source/xilinx_macros/simple_dual_port_xpm.v \
-   $src_path/source/xilinx_macros/asymmetric_fifo_xpm.v \
-   $src_path/source/memory_interface/genesys_systolic_wrapper.sv \
-   $src_path/source/memory_interface/control_m_axi_write_master_counter.sv \
-   $src_path/source/memory_interface/control_m_axi_read_master.sv \
-   $src_path/source/memory_interface/control_m_axi_write_master.sv \
-   $src_path/source/memory_interface/systolic_fpga.v \
-   $src_path/source/memory_interface/control_m_axi_read_master_fifo.sv \
-   $src_path/source/memory_interface/control_m_axi_write_master_fifo.sv \
-   $src_path/source/memory_interface/ddr_memory_interface_control_m_axi_fifo.sv \
-   $src_path/source/memory_interface/ddr_memory_interface_control_m_axi.sv\
-   $src_path/source/memory_interface/systolic_fpga_control_s_axi.v }]
+add_files $src_path/include/config.vh
+add_files [subst { $src_path/genesys_src/tag_sync.v \
+   $src_path/genesys_src/pe.v \
+   $src_path/genesys_src/compute_addr_gen.v \
+   $src_path/genesys_src/signed_adder.v \
+   $src_path/genesys_src/systolic_array.v \
+   $src_path/genesys_src/base_addr_gen.v \
+   $src_path/genesys_src/tag_logic.v \
+   $src_path/genesys_src/mem_walker_stride_group.v \
+   $src_path/genesys_src/weight_buffer.v \
+   $src_path/genesys_src/bias_buffer.v \
+   $src_path/genesys_src/instruction_memory.v \
+   $src_path/genesys_src/ram_asymmetric.v \
+   $src_path/genesys_src/parambuf_interface.v  
+   $src_path/genesys_src/genesys_top_module.v \
+   $src_path/genesys_src/obuf_interface.v \
+   $src_path/genesys_src/decoder.v \
+   $src_path/genesys_src/ram.v \
+   $src_path/genesys_src/truncator.v \
+   $src_path/genesys_src/controller_fsm_group.v \
+   $src_path/genesys_src/fifo.v \
+   $src_path/genesys_src/obuf.v \
+   $src_path/genesys_src/obuf_wrapper.v \
+   $src_path/genesys_src/ibuf_data_shuffler.v \
+   $src_path/genesys_src/ibuf.v \
+   $src_path/genesys_src/ibuf_interface.v \
+   $src_path/genesys_src/instruction_memory_wrapper.v \
+   $src_path/genesys_src/controller.sv \
+   $src_path/genesys_src/register_sync.v \
+   $src_path/genesys_src/macc.v \
+   $src_path/genesys_src/mem_request_splitter.sv \
+   $src_path/xilinx_macros/simple_dual_port_xpm.v \
+   $src_path/xilinx_macros/asymmetric_fifo_xpm.v \
+   $src_path/memory_interface/genesys_systolic_wrapper.sv \
+   $src_path/memory_interface/control_m_axi_write_master_counter.sv \
+   $src_path/memory_interface/control_m_axi_read_master.sv \
+   $src_path/memory_interface/control_m_axi_write_master.sv \
+   $src_path/memory_interface/systolic_fpga.v \
+   $src_path/memory_interface/control_m_axi_read_master_fifo.sv \
+   $src_path/memory_interface/control_m_axi_write_master_fifo.sv \
+   $src_path/memory_interface/ddr_memory_interface_control_m_axi_fifo.sv \
+   $src_path/memory_interface/ddr_memory_interface_control_m_axi.sv\
+   $src_path/memory_interface/systolic_fpga_control_s_axi.v }]
    
    
    create_ip -name ila -vendor xilinx.com -library ip -version 6.2 -module_name ila_0
