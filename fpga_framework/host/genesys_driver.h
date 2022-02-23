@@ -29,6 +29,9 @@
 #define ADDR_OFFSET_BIAS 4096
 #define ADDR_OFFSET_OUTPUT 0
 
+std::string REPO_PATH = "/home/rohan/GeneSys"
+
+
 #ifdef RESNET50_GEMM
     #define NUM_INSTRUCTION 880 // this has to be in bytes as it is used by hardware. Or change hardware
     #define NUM_INPUT 13542400
@@ -36,11 +39,11 @@
     #define NUM_BIAS 128
     #define NUM_OUTPUT 1605632
 
-    std::string instruction_file  =   "verif/systolic_array/resnet50_gemm/fpga_8x8_tile4_case0_gemm_decimal.txt.txt"; 
-    std::string output_file       =   "verif/systolic_array/resnet50_gemm/out.txt";
-    std::string input_file        =   "verif/systolic_array/resnet50_gemm/data_shuffled.txt";
-    std::string weight_file       =   "verif/systolic_array/resnet50_gemm/weight_shuffled.txt"; 
-    std::string bias_file         =   "verif/systolic_array/resnet50_gemm/bias.txt"; 
+    std::string instruction_file  =  REPO_PATH + "verif/systolic_array/resnet50_gemm/fpga_8x8_tile4_case0_gemm_decimal.txt.txt"; 
+    std::string output_file       =  REPO_PATH + "verif/systolic_array/resnet50_gemm/out.txt";
+    std::string input_file        =  REPO_PATH + "verif/systolic_array/resnet50_gemm/data_shuffled.txt";
+    std::string weight_file       =  REPO_PATH + "verif/systolic_array/resnet50_gemm/weight_shuffled.txt"; 
+    std::string bias_file         =  REPO_PATH + "verif/systolic_array/resnet50_gemm/bias.txt"; 
 
     #define ADDR_OFFSET_INSTRUCTION 0
     #define ADDR_OFFSET_INPUT 4259840
@@ -55,11 +58,11 @@
     #define NUM_BIAS 128
     #define NUM_OUTPUT 1605632
 
-    std::string instruction_file  =   "erif/systolic_array/resnet50_conv/fpga_8x8_tile3_case0_oc_oh_ow_conv_decimal.txt"; 
-    std::string output_file       =   "erif/systolic_array/resnet50_conv/out.txt";
-    std::string input_file        =   "erif/systolic_array/resnet50_conv/data_shuffled.txt";
-    std::string weight_file       =   "erif/systolic_array/resnet50_conv/weight_shuffled.txt"; 
-    std::string bias_file         =   "erif/systolic_array/resnet50_conv/bias.txt"; 
+    std::string instruction_file  =  REPO_PATH + "verif/systolic_array/resnet50_conv/fpga_8x8_tile3_case0_oc_oh_ow_conv_decimal.txt"; 
+    std::string output_file       =  REPO_PATH + "verif/systolic_array/resnet50_conv/out.txt";
+    std::string input_file        =  REPO_PATH + "verif/systolic_array/resnet50_conv/data_shuffled.txt";
+    std::string weight_file       =  REPO_PATH + "verif/systolic_array/resnet50_conv/weight_shuffled.txt"; 
+    std::string bias_file         =  REPO_PATH + "verif/systolic_array/resnet50_conv/bias.txt"; 
 
     #define ADDR_OFFSET_INSTRUCTION 0
     #define ADDR_OFFSET_INPUT 4259840

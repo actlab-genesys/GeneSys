@@ -27,7 +27,7 @@ help::
 CWD := $(shell pwd)
 
 # Edit path here to change design sources directory or set variable in shell and use make -e, latter is not recommended
-SRC_PATH := $(CWD)/../genesys-systolic
+SRC_PATH := $(CWD)/../src/systolic_array/
 
 #PART setting: uncomment the line matching your Alveo card
 #PART := xcu200-fsgd2104-2-e
