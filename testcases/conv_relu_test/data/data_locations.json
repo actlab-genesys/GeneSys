@@ -1,0 +1,26 @@
+{
+  "data": {
+    "cdlt": "conv_bias_relu1",
+    "path": "/home/rohan/compiler/codelets.src/examples/genesys/../../tools/compilation_output/conv_relu_pool_oc64_v1-opt_benchmark16x16_3/layer0_conv_bias_relu1/data/data.txt",
+    "cdlt_name": "data",
+    "operand_type": "input"
+  },
+  "weight": {
+    "cdlt": "conv_bias_relu1",
+    "path": "/home/rohan/compiler/codelets.src/examples/genesys/../../tools/compilation_output/conv_relu_pool_oc64_v1-opt_benchmark16x16_3/layer0_conv_bias_relu1/data/weight.txt",
+    "cdlt_name": "weight",
+    "operand_type": "input"
+  },
+  "bias": {
+    "cdlt": "conv_bias_relu1",
+    "path": "/home/rohan/compiler/codelets.src/examples/genesys/../../tools/compilation_output/conv_relu_pool_oc64_v1-opt_benchmark16x16_3/layer0_conv_bias_relu1/data/bias.txt",
+    "cdlt_name": "bias",
+    "operand_type": "input"
+  },
+  "out": {
+    "cdlt": "conv_bias_relu1",
+    "path": "/home/rohan/compiler/codelets.src/examples/genesys/../../tools/compilation_output/conv_relu_pool_oc64_v1-opt_benchmark16x16_3/layer0_conv_bias_relu1/data/out.txt",
+    "cdlt_name": "out",
+    "operand_type": "output"
+  }
+}

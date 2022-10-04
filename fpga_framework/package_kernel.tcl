@@ -52,10 +52,24 @@ proc edit_core {core} {
   set_property value        32           $bifparam
   set_property value_source constant     $bifparam
 
+  set bif      [::ipx::get_bus_interfaces -of $core  "m04_simd_axi"] 
+  set bifparam [::ipx::add_bus_parameter -quiet "MAX_BURST_LENGTH" $bif]
+  set_property value        64           $bifparam
+  set_property value_source constant     $bifparam
+  set bifparam [::ipx::add_bus_parameter -quiet "NUM_READ_OUTSTANDING" $bif]
+  set_property value        32           $bifparam
+  set_property value_source constant     $bifparam
+  set bifparam [::ipx::add_bus_parameter -quiet "NUM_WRITE_OUTSTANDING" $bif]
+  set_property value        32           $bifparam
+  set_property value_source constant     $bifparam
+
+  
+
   ::ipx::associate_bus_interfaces -busif "m00_imem_axi" -clock "ap_clk" $core
   ::ipx::associate_bus_interfaces -busif "m01_parambuf_axi" -clock "ap_clk" $core
   ::ipx::associate_bus_interfaces -busif "m02_ibuf_axi" -clock "ap_clk" $core
   ::ipx::associate_bus_interfaces -busif "m03_obuf_axi" -clock "ap_clk" $core
+  ::ipx::associate_bus_interfaces -busif "m04_simd_axi" -clock "ap_clk" $core
   ::ipx::associate_bus_interfaces -busif "s_axi_control" -clock "ap_clk" $core
 
   # Specify the freq_hz parameter 
@@ -214,7 +228,13 @@ proc edit_core {core} {
   set_property address_offset 0x0ac $reg
   set_property size           [expr {8*8}]   $reg
   set regparam [::ipx::add_register_parameter -quiet {ASSOCIATED_BUSIF} $reg] 
-  set_property value m03_obuf_axi $regparam 
+  set_property value m03_obuf_axi $regparam
+
+  set reg      [::ipx::add_register -quiet "axi04_simd_ptr0" $addr_block]
+  set_property address_offset 0x0b8 $reg
+  set_property size           [expr {8*8}]   $reg
+  set regparam [::ipx::add_register_parameter -quiet {ASSOCIATED_BUSIF} $reg] 
+  set_property value m04_simd_axi $regparam 
 
   set_property slave_memory_map_ref "s_axi_control" [::ipx::get_bus_interfaces -of $core "s_axi_control"]
 

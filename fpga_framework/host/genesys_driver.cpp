@@ -15,13 +15,19 @@ int num_output = 0 ;
 int main(int argc, char** argv)
 {
     int reg_initialize_val = 0;
+   // int wait_var = 0;
     long addr_initialize_val = 0;
-    clock_t data_transfer_start, output_transfer_start, execution_start;
+    clock_t data_transfer_start, output_transfer_start, execution_start, time_taken;
+    clock_t start;
+    start = clock();
 // ------------------------------------------------------------------------------------
 // Step 1: Initialize the OpenCL environment 
 // the host detects the attached Xilinx device, loads the FPGA binary (.xclbin file) from file and programs it into the first Xilinx device it found
 // ------------------------------------------------------------------------------------ 
     cl_int err;
+    cl_ulong time_start, time_end, exec_time;
+    cl::Event timing_event;
+
     std::string binaryFile = (argc != 2) ? "systolic_fpga.hw_emu.xclbin" : argv[1];
     unsigned fileBufSize;    
     // adds the list of xilinx devices into the stl  vector
@@ -50,23 +56,32 @@ int main(int argc, char** argv)
     */
    
     cl::Buffer base_address(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, sizeof(int) * TOTAL_DATA_SIZE_INT, NULL, &err);
-    cl::Buffer outputs(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_WRITE_ONLY, sizeof(int) * NUM_OUTPUT * 2, NULL, &err);
+    cl::Buffer outputs(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, sizeof(int) * NUM_OUTPUT * 2, NULL, &err);
+    cl::Buffer simd_outputs(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, sizeof(int) * NUM_OUTPUT * 2, NULL, &err);
 
     // Map host-side buffer memory to user-space pointers (kernel paramters?)
     int *base_ptr = (int *)q.enqueueMapBuffer(base_address, CL_TRUE, CL_MAP_WRITE, 0, sizeof(int) * TOTAL_DATA_SIZE_INT);
     int *output_ptr = (int *)q.enqueueMapBuffer(outputs, CL_TRUE, CL_MAP_WRITE | CL_MAP_READ, 0, sizeof(int) * NUM_OUTPUT * 2);
+    int *simd_output_ptr = (int *)q.enqueueMapBuffer(simd_outputs, CL_TRUE, CL_MAP_WRITE | CL_MAP_READ, 0, sizeof(int) * NUM_OUTPUT * 2);
     
     
     const int input_addr_iterator = INPUT_ADDR_PTR;
     const int weight_addr_iterator = WEIGHTS_ADDR_PTR;
     const int bias_addr_iterator = BIAS_ADDR_PTR;
+    const int simd_addr_vmem1_iterator = ADDR_OFFSET_VMEM1 ;
+    const int simd_addr_vmem2_iterator = ADDR_OFFSET_VMEM2 ;
+    const int simd_addr_vmem1_ld_iterator = ADDR_OFFSET_VMEM1_LD ;
+    const int simd_addr_vmem2_ld_iterator = ADDR_OFFSET_VMEM2_LD ;
     
 
     read_instructions_file(instruction_file, base_ptr,0);
     read_data_file(bias_file, base_ptr,bias_addr_iterator,0);
     read_data_file(weight_file, base_ptr,weight_addr_iterator,0);
     read_data_file(input_file, base_ptr,input_addr_iterator,0);
-    initialize_array(output_ptr, NUM_OUTPUT, reg_initialize_val);
+    read_data_file(simd_input_file1, simd_output_ptr,simd_addr_vmem1_ld_iterator,0);
+    read_data_file(simd_input_file2, simd_output_ptr,simd_addr_vmem2_ld_iterator,0);
+    initialize_array(output_ptr, 2*NUM_OUTPUT, reg_initialize_val);
+   //initialize_array(simd_output_ptr,2*NUM_OUTPUT, reg_initialize_val);
 // ------------------------------------------------------------------------------------
 // Step 3: Run the kernel
 // schedule three operations on the command queue: 
@@ -74,34 +89,80 @@ int main(int argc, char** argv)
 //  2. the execution of the kernel
 //  3. lastly the transfer of the results back to host memory
 // ------------------------------------------------------------------------------------
+    
+    //systolic_fpga_krnl.setArg(3, 1);
+    // wait for some time
+   // while (wait_var < 20) 
+   //     wait_var++;
+   // systolic_fpga_krnl.setArg(3, 0);
+    
+    
     // Set kernel arguments
     std::cout << "Initialize registers" <<"\n";    
     for (int i = 0; i < 15; i++) {
-        if (i != 2)
+        if (i != 2 && i!= 4)
             systolic_fpga_krnl.setArg(i, reg_initialize_val);    
-    }   
+    }
+
     systolic_fpga_krnl.setArg(2, NUM_INSTRUCTION); 
+    systolic_fpga_krnl.setArg(4, NUM_OUTPUT); 
     systolic_fpga_krnl.setArg(15, base_address);
     // writing base address for now. Else getting seg fault    
     systolic_fpga_krnl.setArg(16, base_address);  
     systolic_fpga_krnl.setArg(17, base_address);   
     systolic_fpga_krnl.setArg(18, outputs);
+    systolic_fpga_krnl.setArg(19, simd_outputs);
+
+    std::cout << "SIMD_pointer:" << simd_output_ptr << std::endl ;
+
     
     // Schedule transfer of inputs to device memory, execution of kernel, and transfer of outputs back to host memory
     std::cout << "Transfer Data to DDR" <<"\n";
     //data_transfer_start = clock();
-    q.enqueueMigrateMemObjects({base_address, outputs}, 0 /* 0 means from host*/); 
-    //std::cout<< "Input Transfer Time: "<<(double)(clock() - data_transfer_start)/CLOCKS_PER_SEC << std::endl;
+    q.enqueueMigrateMemObjects({base_address, outputs, simd_outputs}, 0 /* 0 means from host*/,NULL,&timing_event); 
+    q.finish();
+    timing_event.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
+    timing_event.getProfilingInfo(CL_PROFILING_COMMAND_END,&time_end);
+    exec_time = time_end-time_start;
+    printf("Input Transfer Time: %.7lf \n", (double) exec_time/1000000000);
+    printf("Input Transfer Cycles: %lf \n", (double) exec_time);
+
+    //time_taken = (double)(clock() - data_transfer_start) ;
+    //std::cout<< "Input Transfer Time: "<<(double)(time_taken)/CLOCKS_PER_SEC << std::endl;
+    //std::cout<< "Input Transfer Cycles: "<<(double)(time_taken) << std::endl;
 
        
     std::cout << "Execute Program" <<"\n";
-    //execution_start  = clock();
-    q.enqueueTask(systolic_fpga_krnl);
+    stoptime(start, "set up kernel");
+    start = clock();
+    q.enqueueTask(systolic_fpga_krnl,NULL,&timing_event);
+    q.finish();
+    stoptime(start, "run kernel");
+    timing_event.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
+    timing_event.getProfilingInfo(CL_PROFILING_COMMAND_END,&time_end);
+    exec_time = time_end-time_start;
+    printf("Execution Time: %.7lf \n", (double) exec_time/1000000000);
+    printf("Execution Cycles: %lf \n", (double) exec_time);
+
+    //time_taken = (double)(clock() - execution_start) ;
+    //std::cout<< "Execution Time: "<<(double)(time_taken)/CLOCKS_PER_SEC << std::endl;
+    //std::cout<< "Execution Cycles: "<<(double)(time_taken) << std::endl;
+
     //std::cout<< "Execution Time: "<<(double)(clock() - execution_start)/CLOCKS_PER_SEC << std::endl;
     std::cout << "Copy data from DDR" <<"\n";
     //output_transfer_start = clock();
-    q.enqueueMigrateMemObjects({outputs}, CL_MIGRATE_MEM_OBJECT_HOST);
-    std::cout<< "Execution Time: "<<(double)(clock() - output_transfer_start)/CLOCKS_PER_SEC << std::endl;
+    q.enqueueMigrateMemObjects({simd_outputs,outputs}, CL_MIGRATE_MEM_OBJECT_HOST,NULL,&timing_event);
+    q.finish();
+    timing_event.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
+    timing_event.getProfilingInfo(CL_PROFILING_COMMAND_END,&time_end);
+    exec_time = time_end-time_start;
+    printf("Output Transfer Time: %.7lf \n", (double) exec_time/1000000000);
+    printf("Output Transfer Cycles: %lf \n", (double) exec_time);
+    //time_taken = (double)(clock() - output_transfer_start) ;
+    //std::cout<< "Output Transfer Time: "<<(double)(time_taken)/CLOCKS_PER_SEC << std::endl;
+    //std::cout<< "Output Transfer Cycles: "<<(double)(time_taken) << std::endl;
+
+    //std::cout<< "Execution Time: "<<(double)(clock() - output_transfer_start)/CLOCKS_PER_SEC << std::endl;
 
     // Wait for all scheduled operations to finish
     //q.finish() is necessary to wait until all enqueued commands run to completion as otherwise computation on the accelerator is non blocking.
@@ -110,27 +171,61 @@ int main(int argc, char** argv)
 // ------------------------------------------------------------------------------------
 // Step 4: Check Results and Release Allocated Resources
 // ------------------------------------------------------------------------------------
+
     std::cout << "Output Comparision" <<"\n";
-    //std::cout << output_ptr[0] << "\n" ;
+    //std::cout << output_ptr[0] << "\n" ; 
+
     const int output_addr_iterator = OUTPUT_ADDR_PTR + NUM_OUTPUT;
     int *output_reference_arr = (int *)q.enqueueMapBuffer(outputs, CL_TRUE, CL_MAP_WRITE | CL_MAP_READ, 0, sizeof(int) * NUM_OUTPUT * 2); 
-    read_data_file(output_file, output_reference_arr, output_addr_iterator,1);
-    
-    bool match = true;
+    //int output_reference_arr[2*NUM_OUTPUT] ={0};
+    read_data_file(output_file, output_reference_arr,output_addr_iterator ,1);
+    bool match1 = true;
+    bool match2 = true;
+    bool match0 = true;
+     
+    std::cout << "First checking OBUF" <<"\n";
     for (int i = 0 ; i < num_output ; i++){
         int expected = output_reference_arr[i+NUM_OUTPUT];
         if (output_ptr[i] != expected){
             std::cout << "Error: Result mismatch" << std::endl;
             std::cout << "i = " << i << " CPU result = " << expected << " Device result = " << output_ptr[i] << std::endl;
-            match = false;
+            match0 = false;
             break;
         }
     }
 
+    std::cout << "OBUF mismatched checking VMEM2" <<"\n";
+    for (int i =  0  ; i < num_output ; i++){
+        int expected = output_reference_arr[i+NUM_OUTPUT];	
+        if (simd_output_ptr[i+(simd_addr_vmem2_iterator/4)] != expected){
+            std::cout << "Error: Result mismatch" << std::endl;
+            std::cout << "i = " << i << " CPU result = " << expected << " Device result = " << simd_output_ptr[i+(simd_addr_vmem2_iterator/4)] << std::endl;
+            match2 = false;
+            break;
+        }
+    }
+    
+    std::cout << "VMEM2 mismatched checking VMEM1" <<"\n";
+    for (int i =  0  ; i < num_output ; i++){
+        int expected = output_reference_arr[i+NUM_OUTPUT];
+        if (simd_output_ptr[i+(simd_addr_vmem1_iterator/4)] != expected){
+            std::cout << "Error: Result mismatch" << std::endl;
+            std::cout << "i = " << i << " CPU result = " << expected << " Device result = " << simd_output_ptr[i+(simd_addr_vmem1_iterator/4)] << std::endl;
+            match1 = false;
+            break;
+        }
+    }
+
+  
+
+    
+
+
     delete[] fileBuf;
 
-    std::cout << "TEST " << (match ? "PASSED" : "FAILED") << std::endl; 
-    return (match ? EXIT_SUCCESS : EXIT_FAILURE);
+    std::cout << "TEST " << ((match0||match1 ||match2) ? "PASSED" : "FAILED") << std::endl; 
+    return ((match1 || match2) ? EXIT_SUCCESS : EXIT_FAILURE);
+
 }
 
 
@@ -196,12 +291,15 @@ void read_instructions_file(const std::string &file_name, int *arr, int debug_fl
         while (!fp.eof()) {
             std::getline(fp, line);
             longLine = std::stoll(line);
+	    //std::cout << "Index: " << idx << " String Value: "<< (uint)longLine <<"\n";
             if (debug_flag == 1) {
                 std::cout<<"size is ="<<line.size()<<"\n";
                 std::cout << "Index: " << idx << " String Value: "<< (uint)longLine <<"\n";
             }
             arr[idx++] = (uint)longLine;
-
+	   // if (idx == 248){
+           //	break;
+	   // }
         
         }
         fp.close();
@@ -226,7 +324,10 @@ void read_data_file(const std::string &file_name, int *arr, const int ptr, const
     while (fp >> line)
     {
         arr[local_ptr] = (uint) line;
-//	std::cout << arr[local_ptr] << " \n" << std::endl ;
+
+	//if (get_num_lines)
+	//	std::cout << arr +4*local_ptr << "\n" << std::endl ;
+	//std::cout << "ADDRESS: " << &arr[local_ptr] <<" Value: " << arr[local_ptr] << " \n" << std::endl ;
         local_ptr++;
 	idx++ ;
 	
@@ -263,3 +364,13 @@ void initialize_array(int *arr, int size, int val)
     }
     std::cout << "Exiting Initialize Array Function" <<"\n";
 }
+
+void stoptime (clock_t start, char msg[])
+{
+    clock_t end;
+    double cpu_time_used;
+    end = clock();
+    cpu_time_used = ((double) (end - start))/CLOCKS_PER_SEC;
+    printf("CPU time used for %s =  %.7lf \n", msg, cpu_time_used);
+}
+

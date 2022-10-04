@@ -27,7 +27,7 @@ help::
 CWD := $(shell pwd)
 
 # Edit path here to change design sources directory or set variable in shell and use make -e, latter is not recommended
-SRC_PATH := $(CWD)/../src/systolic_array/
+SRC_PATH := $(CWD)/../genesys-systolic
 
 #PART setting: uncomment the line matching your Alveo card
 #PART := xcu200-fsgd2104-2-e
@@ -37,10 +37,9 @@ PART := xcu280-fsvh2892-2L-e
 
 # PLATFORM setting: uncomment the lin matching your Alveo card
 PLATFORM := xilinx_u280_xdma_201920_1
-#PLATFORM := xilinx_u2_gen3x4_xdma_gc_2_202110_1
 
 # TARGET: set the build target, can be hw or hw_emu
-TARGET := hw
+TARGET := hw_emu
 
 
 .phony: clean traces
@@ -62,7 +61,7 @@ runsim:
 	./runsim_xsim.sh
 
 
-################## hardware build
+################## hardware build 
 NCPUS := $(shell grep -c ^processor /proc/cpuinfo)
 #JOBS := $(shell expr $(NCPUS) - 30)
 JOBS := 6
@@ -85,7 +84,9 @@ INCREMENTAL_BUILD := vpl.synth
 
 
 build_hw:
-	v++ $(XOCCLFLAGS) $(XOCCFLAGS) $(DEBUG_OPT) --config systolic_fpga.cfg --kernel_frequency 0:80 -o systolic_fpga.$(TARGET).xclbin systolic_fpga.xo
+	v++ $(XOCCLFLAGS) $(XOCCFLAGS)  --config systolic_fpga.cfg --kernel_frequency 0:10 -o systolic_fpga.$(TARGET).xclbin systolic_fpga.xo
+
+
 
 ################## software build for XRT Native API code
 CXXFLAGS := -std=c++14 -Wno-deprecated-declarations -D$(TEST_NAME)

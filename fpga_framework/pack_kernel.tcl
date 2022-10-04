@@ -18,71 +18,85 @@ set cwd [lindex $argv 2]
 
 # add design sources into project
 #Using subst is not good practice, keep now for ease of use
-add_files $src_path/include/config.vh
-add_files [subst { $src_path/genesys_src/tag_sync.v \
-   $src_path/genesys_src/pe.v \
-   $src_path/genesys_src/compute_addr_gen.v \
-   $src_path/genesys_src/signed_adder.v \
-   $src_path/genesys_src/systolic_array.v \
-   $src_path/genesys_src/base_addr_gen.v \
-   $src_path/genesys_src/tag_logic.v \
-   $src_path/genesys_src/mem_walker_stride_group.v \
-   $src_path/genesys_src/weight_buffer.v \
-   $src_path/genesys_src/bias_buffer.v \
-   $src_path/genesys_src/instruction_memory.v \
-   $src_path/genesys_src/ram_asymmetric.v \
-   $src_path/genesys_src/parambuf_interface.v  
-   $src_path/genesys_src/genesys_top_module.v \
-   $src_path/genesys_src/obuf_interface.v \
-   $src_path/genesys_src/decoder.v \
-   $src_path/genesys_src/ram.v \
-   $src_path/genesys_src/truncator.v \
-   $src_path/genesys_src/controller_fsm_group.v \
-   $src_path/genesys_src/fifo.v \
-   $src_path/genesys_src/obuf.v \
-   $src_path/genesys_src/obuf_wrapper.v \
-   $src_path/genesys_src/ibuf_data_shuffler.v \
-   $src_path/genesys_src/ibuf.v \
-   $src_path/genesys_src/ibuf_interface.v \
-   $src_path/genesys_src/instruction_memory_wrapper.v \
-   $src_path/genesys_src/controller.sv \
-   $src_path/genesys_src/register_sync.v \
-   $src_path/genesys_src/macc.v \
-   $src_path/genesys_src/mem_request_splitter.sv \
-   $src_path/xilinx_macros/simple_dual_port_xpm.v \
-   $src_path/xilinx_macros/asymmetric_fifo_xpm.v \
-   $src_path/memory_interface/genesys_systolic_wrapper.sv \
-   $src_path/memory_interface/control_m_axi_write_master_counter.sv \
-   $src_path/memory_interface/control_m_axi_read_master.sv \
-   $src_path/memory_interface/control_m_axi_write_master.sv \
-   $src_path/memory_interface/systolic_fpga.v \
-   $src_path/memory_interface/control_m_axi_read_master_fifo.sv \
-   $src_path/memory_interface/control_m_axi_write_master_fifo.sv \
-   $src_path/memory_interface/ddr_memory_interface_control_m_axi_fifo.sv \
-   $src_path/memory_interface/ddr_memory_interface_control_m_axi.sv\
-   $src_path/memory_interface/systolic_fpga_control_s_axi.v }]
-   
-   
-   create_ip -name ila -vendor xilinx.com -library ip -version 6.2 -module_name ila_0
+add_files $src_path/source/include/config.vh
+add_files [subst { $src_path/source/genesys_src/tag_sync.v \
+   $src_path/source/genesys_src/pe.v \
+   $src_path/source/genesys_src/compute_addr_gen.v \
+   $src_path/source/genesys_src/signed_adder.v \
+   $src_path/source/genesys_src/systolic_array.v \
+   $src_path/source/genesys_src/base_addr_gen.v \
+   $src_path/source/genesys_src/tag_logic.v \
+   $src_path/source/genesys_src/mem_walker_stride_group.v \
+   $src_path/source/genesys_src/weight_buffer.v \
+   $src_path/source/genesys_src/bias_buffer.v \
+   $src_path/source/genesys_src/instruction_memory.v \
+   $src_path/source/genesys_src/ram_asymmetric.v \
+   $src_path/source/genesys_src/parambuf_interface.v  
+   $src_path/source/genesys_src/genesys_top_module.v \
+   $src_path/source/genesys_src/obuf_interface.v \
+   $src_path/source/genesys_src/decoder.v \
+   $src_path/source/genesys_src/ram.v \
+   $src_path/source/genesys_src/performance_counters.sv
+   $src_path/source/genesys_src/perf_counter_config.v \
+   $src_path/source/genesys_src/perf_counter.v \
+   $src_path/source/genesys_src/truncator.v \
+   $src_path/source/genesys_src/controller_fsm_group.v \
+   $src_path/source/genesys_src/fifo.v \
+   $src_path/source/genesys_src/obuf.v \
+   $src_path/source/genesys_src/obuf_wrapper.v \
+   $src_path/source/genesys_src/ibuf_data_shuffler.v \
+   $src_path/source/genesys_src/ibuf.v \
+   $src_path/source/genesys_src/ibuf_interface.v \
+   $src_path/source/genesys_src/instruction_memory_wrapper.v \
+   $src_path/source/genesys_src/controller.sv \
+   $src_path/source/genesys_src/register_sync.v \
+   $src_path/source/genesys_src/macc.v \
+   $src_path/source/genesys_src/mem_request_splitter.sv \
+   $src_path/source/simd_src/arithmetic_unit.v \                  
+   $src_path/source/simd_src/datatype_cast.v \                            
+   $src_path/source/simd_src/nested_loop.v   \       
+   $src_path/source/simd_src/single_loop.v     \
+   $src_path/source/simd_src/pipeline.v                  \
+   $src_path/source/simd_src/iterator_memories_flexible_ns.v  \
+   $src_path/source/simd_src/calculus_unit.v                          \
+   $src_path/source/simd_src/saturate.v \         
+   $src_path/source/simd_src/tanh.v  \
+   $src_path/source/simd_src/comparison_unit.v   \                     
+   $src_path/source/simd_src/sigmoid.v    \               
+   $src_path/source/simd_src/compute_unit.v      \
+   $src_path/source/simd_src/compute_unit_test.v \   
+   $src_path/source/simd_src/simd_data_shuffler.v     \   
+   $src_path/source/simd_src/vector_memory.v   \
+   $src_path/source/simd_src/controller_fsm_group_simd_debug.v      \
+   $src_path/source/simd_src/controller_fsm_group_simd.v      \        
+   $src_path/source/simd_src/execute_control_pipelines.v       \               
+   $src_path/source/simd_src/mem_walker_stride_group_simd.v   \
+   $src_path/source/simd_src/SIMD_instruction_decoder.v  \
+   $src_path/source/simd_src/mul_unit.v      \                 
+   $src_path/source/simd_src/simd_ld_st_interface.v      \
+   $src_path/source/simd_src/iterator_address_gen_new.v         \              
+   $src_path/source/simd_src/namespace_mux.v          \        
+   $src_path/source/simd_src/SIMD_top.v    \ 
+   $src_path/source/simd_src/sqrt_fix_sqrt_fixed_32_16_s.v  \
+   $src_path/source/simd_src/sqrt_fix.v  \
+   $src_path/source/simd_src/perf_counter_step.v   \
+   $src_path/source/xilinx_macros/simple_dual_port_xpm.v \
+   $src_path/source/xilinx_macros/asymmetric_fifo_xpm.v \
+   $src_path/source/memory_interface/genesys_systolic_wrapper.sv \
+   $src_path/source/memory_interface/control_m_axi_write_master_counter.sv \
+   $src_path/source/memory_interface/control_m_axi_read_master.sv \
+   $src_path/source/memory_interface/control_m_axi_write_master.sv \
+   $src_path/source/memory_interface/systolic_fpga.v \
+   $src_path/source/memory_interface/control_m_axi_read_master_fifo.sv \
+   $src_path/source/memory_interface/control_m_axi_write_master_fifo.sv \
+   $src_path/source/memory_interface/ddr_memory_interface_control_m_axi_fifo.sv \
+   $src_path/source/memory_interface/ddr_memory_interface_control_m_axi.sv\
+   $src_path/source/memory_interface/systolic_fpga_control_s_axi.v }]
+  
 
-   set_property -dict [list CONFIG.C_PROBE19_WIDTH {32} CONFIG.C_PROBE18_WIDTH {32} \
-   CONFIG.C_PROBE17_WIDTH {32} CONFIG.C_PROBE16_WIDTH {32} CONFIG.C_PROBE15_WIDTH {32} \
-   CONFIG.C_PROBE14_WIDTH {32} CONFIG.C_PROBE13_WIDTH {32} CONFIG.C_PROBE12_WIDTH {32} \
-   CONFIG.C_PROBE11_WIDTH {32} CONFIG.C_PROBE10_WIDTH {8} CONFIG.C_PROBE9_WIDTH {8} \
-   CONFIG.C_PROBE8_WIDTH {8} CONFIG.C_PROBE7_WIDTH {8} CONFIG.C_PROBE6_WIDTH {8} \
-   CONFIG.C_NUM_OF_PROBES {20} CONFIG.C_EN_STRG_QUAL {1} CONFIG.C_INPUT_PIPE_STAGES {2} \
-   CONFIG.C_ADV_TRIGGER {true} CONFIG.ALL_PROBE_SAME_MU {FALSE} CONFIG.C_PROBE0_MU_CNT {4} \
-   CONFIG.C_PROBE1_MU_CNT {4} CONFIG.C_PROBE2_MU_CNT {4} CONFIG.C_PROBE3_MU_CNT {4} \
-   CONFIG.C_PROBE4_MU_CNT {4} CONFIG.C_PROBE5_MU_CNT {4} CONFIG.C_PROBE6_MU_CNT {4} \
-   CONFIG.C_PROBE7_MU_CNT {4} CONFIG.C_PROBE8_MU_CNT {4} CONFIG.C_PROBE9_MU_CNT {4} \
-   CONFIG.C_PROBE10_MU_CNT {4} CONFIG.C_PROBE11_MU_CNT {4} CONFIG.C_PROBE12_MU_CNT {4} \
-   CONFIG.C_PROBE13_MU_CNT {4} CONFIG.C_PROBE14_MU_CNT {4} CONFIG.C_PROBE15_MU_CNT {4} \
-   CONFIG.C_PROBE16_MU_CNT {4} CONFIG.C_PROBE17_MU_CNT {4} CONFIG.C_PROBE18_MU_CNT {4} \
-   CONFIG.C_PROBE19_MU_CNT {4}] [get_ips ila_0]
+    
 
-   generate_target all [get_files  ./../genesys-systolic/source/xilinx_macros/ila_0.xci]
-
-   # removed files
+  #Removed files
    # $src_path/source/genesys_src/banked_scratchpad.v \
    # $src_path/source/genesys_src/scratchpad.v \
    # $src_path/source/genesys_src/obuf_data_shuffler.v \
