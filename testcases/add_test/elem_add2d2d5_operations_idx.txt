@@ -1,0 +1,18 @@
+// CODELET:	elem_add2d2d5
+inputs=op1['N', 'C'], op2['N', 'C']
+intermediates=
+outputs=out['N', 'C']
+0	config0: start-SIMD
+1	(N)loop0[0]: START=0; STOP=1; STRIDE=1; OFFSET:0
+2		(C)loop1[1]: START=0; STOP=2048; STRIDE=2048; OFFSET:0
+3			transfer1: OPERAND: op2[DRAM->VMEM2], SIZES: [[1, 2048], [1, 2048]]
+4			transfer0: OPERAND: op1[DRAM->VMEM1], SIZES: [[1, 2048], [1, 2048]]
+5			(N)loop2[2]: START=0; STOP=1; STRIDE=1; OFFSET:0
+6				(C)loop3[3]: START=0; STOP=2048; STRIDE=1; OFFSET:0
+7					compute0: SIMD-ADD(['op1', 'op2'])->['out']
+8				loop3: END
+9			loop2: END
+10			transfer2: OPERAND: out[VMEM1->DRAM], SIZES: [[1, 2048], [1, 2048]]
+11		loop1: END
+12	loop0: END
+13	config1: end-SIMD

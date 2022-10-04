@@ -1,0 +1,821 @@
+{
+  "mode": "inference",
+  "program": [
+    {
+      "operation": "conv_bias_relu",
+      "instance_id": 1,
+      "iterable_dimensions": {
+        "OC": 64,
+        "N": 1,
+        "IC": 64,
+        "KH": 1,
+        "KW": 1,
+        "OH": 12,
+        "OW": 12
+      },
+      "operation_parameters": {
+        "stride": 1,
+        "pad": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "IH": 12,
+        "IW": 12,
+        "SIMD_SIZE": 16
+      },
+      "inputs": [
+        {
+          "name": "data",
+          "unique_name": "input",
+          "dtype": "FXP8",
+          "shape_symbols": {
+            "N": 1,
+            "IH": 12,
+            "IW": 12,
+            "IC": 64
+          },
+          "data_path": [
+            "DRAM",
+            "IBUF",
+            "pe_array"
+          ],
+          "tiling": {
+            "DRAM": {
+              "N": 1,
+              "IH": 12,
+              "IW": 12,
+              "IC": 64
+            },
+            "IBUF": {
+              "N": 1,
+              "IH": 6,
+              "IW": 12,
+              "IC": 64
+            },
+            "pe_array": {
+              "N": 1,
+              "IH": 1,
+              "IW": 1,
+              "IC": 16
+            }
+          }
+        },
+        {
+          "name": "weight",
+          "unique_name": "conv1.weight",
+          "dtype": "FXP8",
+          "shape_symbols": {
+            "KH": 1,
+            "KW": 1,
+            "IC": 64,
+            "OC": 64
+          },
+          "data_path": [
+            "DRAM",
+            "WBUF",
+            "pe_array"
+          ],
+          "tiling": {
+            "DRAM": {
+              "KH": 1,
+              "KW": 1,
+              "IC": 64,
+              "OC": 64
+            },
+            "WBUF": {
+              "KH": 1,
+              "KW": 1,
+              "IC": 64,
+              "OC": 64
+            },
+            "pe_array": {
+              "KH": 1,
+              "KW": 1,
+              "IC": 16,
+              "OC": 16
+            }
+          }
+        },
+        {
+          "name": "bias",
+          "unique_name": "conv1.bias",
+          "dtype": "FXP32",
+          "shape_symbols": {
+            "OC": 64
+          },
+          "data_path": [
+            "DRAM",
+            "BBUF",
+            "pe_array"
+          ],
+          "tiling": {
+            "DRAM": {
+              "OC": 64
+            },
+            "BBUF": {
+              "OC": 64
+            },
+            "pe_array": {
+              "OC": 16
+            }
+          }
+        }
+      ],
+      "intermediate": [
+        {
+          "name": "temp0",
+          "unique_name": null,
+          "dtype": "FXP32",
+          "shape_symbols": {
+            "SIMD_SIZE": 16
+          },
+          "data_path": [
+            "IMM",
+            "SIMD"
+          ],
+          "tiling": {
+            "IMM": {
+              "SIMD_SIZE": 0
+            }
+          }
+        },
+        {
+          "name": "conv_out",
+          "unique_name": null,
+          "dtype": "FXP32",
+          "shape_symbols": {
+            "N": 1,
+            "OH": 12,
+            "OW": 12,
+            "OC": 64
+          },
+          "data_path": [
+            "DRAM",
+            "OBUF",
+            "pe_array",
+            "OBUF",
+            "SIMD"
+          ],
+          "tiling": {
+            "DRAM": {
+              "N": 1,
+              "OH": 12,
+              "OW": 12,
+              "OC": 64
+            },
+            "OBUF": {
+              "N": 1,
+              "OH": 6,
+              "OW": 12,
+              "OC": 64
+            },
+            "pe_array": {
+              "N": 1,
+              "OH": 1,
+              "OW": 1,
+              "OC": 16
+            },
+            "SIMD": {
+              "N": 1,
+              "OH": 1,
+              "OW": 1,
+              "OC": 16
+            }
+          }
+        },
+        {
+          "name": "temp2",
+          "unique_name": null,
+          "dtype": "FXP8",
+          "shape_symbols": {
+            "SIMD_SIZE": 16
+          },
+          "data_path": [
+            "IMM"
+          ],
+          "tiling": {}
+        },
+        {
+          "name": "temp3",
+          "unique_name": null,
+          "dtype": "FXP8",
+          "shape_symbols": {
+            "SIMD_SIZE": 16
+          },
+          "data_path": [
+            "IMM"
+          ],
+          "tiling": {}
+        }
+      ],
+      "outputs": [
+        {
+          "name": "out",
+          "unique_name": "relu_1_4Y",
+          "dtype": "FXP32",
+          "shape_symbols": {
+            "N": 1,
+            "OH": 12,
+            "OW": 12,
+            "OC": 64
+          },
+          "data_path": [
+            "SIMD",
+            "VMEM2",
+            "DRAM"
+          ],
+          "tiling": {
+            "VMEM2": {
+              "N": 1,
+              "OH": 6,
+              "OW": 12,
+              "OC": 64
+            },
+            "DRAM": {
+              "N": 1,
+              "OH": 12,
+              "OW": 12,
+              "OC": 64
+            },
+            "SIMD": {
+              "N": 1,
+              "OH": 1,
+              "OW": 1,
+              "OC": 16
+            }
+          }
+        }
+      ],
+      "operation_sequence": [
+        {
+          "op_type": "config",
+          "op_id": 0,
+          "start_or_finish": "start",
+          "target": "systolic_array"
+        },
+        {
+          "op_type": "config",
+          "op_id": 1,
+          "start_or_finish": "start",
+          "target": "WBUF"
+        },
+        {
+          "op_type": "config",
+          "op_id": 2,
+          "start_or_finish": "start",
+          "target": "BBUF"
+        },
+        {
+          "op_type": "config",
+          "op_id": 3,
+          "start_or_finish": "start",
+          "target": "IBUF"
+        },
+        {
+          "op_type": "config",
+          "op_id": 4,
+          "start_or_finish": "start",
+          "target": "OBUF"
+        },
+        {
+          "op_type": "loop",
+          "op_id": 5,
+          "start": 0,
+          "end": 64,
+          "offset": 0,
+          "stride": 64
+        },
+        {
+          "op_type": "transfer",
+          "op_id": 13,
+          "operand": "bias",
+          "transfer_path": [
+            "DRAM",
+            "BBUF"
+          ],
+          "transfers": {
+            "DRAM->BBUF": {
+              "size": 64,
+              "offset": [
+                "DIM:0,LOOPID:0,OFFSET:0"
+              ]
+            },
+            "BBUF->pe_array": {
+              "size": 64,
+              "offset": [
+                "DIM:0,LOOPID:11,OFFSET:0"
+              ]
+            }
+          }
+        },
+        {
+          "op_type": "loop",
+          "op_id": 6,
+          "start": 0,
+          "end": 1,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "loop",
+          "op_id": 7,
+          "start": 0,
+          "end": 64,
+          "offset": 0,
+          "stride": 64
+        },
+        {
+          "op_type": "loop",
+          "op_id": 8,
+          "start": 0,
+          "end": 1,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "loop",
+          "op_id": 9,
+          "start": 0,
+          "end": 1,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "transfer",
+          "op_id": 12,
+          "operand": "weight",
+          "transfer_path": [
+            "DRAM",
+            "WBUF"
+          ],
+          "transfers": {
+            "DRAM->WBUF": {
+              "size": 4096,
+              "offset": [
+                "DIM:0,LOOPID:3,OFFSET:0",
+                "DIM:1,LOOPID:4,OFFSET:0",
+                "DIM:2,LOOPID:2,OFFSET:0",
+                "DIM:3,LOOPID:0,OFFSET:0"
+              ]
+            },
+            "WBUF->pe_array": {
+              "size": 4096,
+              "offset": [
+                "DIM:0,LOOPID:14,OFFSET:0",
+                "DIM:1,LOOPID:15,OFFSET:0",
+                "DIM:2,LOOPID:13,OFFSET:0",
+                "DIM:3,LOOPID:11,OFFSET:0"
+              ]
+            }
+          }
+        },
+        {
+          "op_type": "loop",
+          "op_id": 10,
+          "start": 0,
+          "end": 12,
+          "offset": 0,
+          "stride": 6
+        },
+        {
+          "op_type": "loop",
+          "op_id": 11,
+          "start": 0,
+          "end": 12,
+          "offset": 0,
+          "stride": 12
+        },
+        {
+          "op_type": "transfer",
+          "op_id": 15,
+          "operand": "conv_out",
+          "transfer_path": [
+            "DRAM",
+            "OBUF"
+          ],
+          "transfers": {
+            "DRAM->OBUF": {
+              "size": 9216,
+              "offset": [
+                "DIM:0,LOOPID:1,OFFSET:0",
+                "DIM:1,LOOPID:5,OFFSET:0",
+                "DIM:2,LOOPID:6,OFFSET:0",
+                "DIM:3,LOOPID:0,OFFSET:0"
+              ]
+            },
+            "OBUF->pe_array": {
+              "size": 4608,
+              "offset": [
+                "DIM:0,LOOPID:12,OFFSET:0",
+                "DIM:1,LOOPID:16,OFFSET:0",
+                "DIM:2,LOOPID:17,OFFSET:0",
+                "DIM:3,LOOPID:11,OFFSET:0"
+              ]
+            },
+            "pe_array->OBUF": {
+              "size": 4608,
+              "offset": [
+                "DIM:0,LOOPID:12,OFFSET:0",
+                "DIM:1,LOOPID:16,OFFSET:0",
+                "DIM:2,LOOPID:17,OFFSET:0",
+                "DIM:3,LOOPID:11,OFFSET:0"
+              ]
+            },
+            "OBUF->SIMD": {
+              "size": 4608,
+              "offset": [
+                "DIM:0,LOOPID:19,OFFSET:0",
+                "DIM:1,LOOPID:20,OFFSET:0",
+                "DIM:2,LOOPID:21,OFFSET:0",
+                "DIM:3,LOOPID:18,OFFSET:0"
+              ]
+            }
+          }
+        },
+        {
+          "op_type": "transfer",
+          "op_id": 14,
+          "operand": "data",
+          "transfer_path": [
+            "DRAM",
+            "IBUF"
+          ],
+          "transfers": {
+            "DRAM->IBUF": {
+              "size": 9216,
+              "offset": [
+                "DIM:0,LOOPID:1,OFFSET:0",
+                "DIM:1,LOOPID:3,OFFSET:0",
+                "DIM:1,LOOPID:5,OFFSET:0",
+                "DIM:2,LOOPID:4,OFFSET:0",
+                "DIM:2,LOOPID:6,OFFSET:0",
+                "DIM:3,LOOPID:2,OFFSET:0"
+              ]
+            },
+            "IBUF->pe_array": {
+              "size": 4608,
+              "offset": [
+                "DIM:0,LOOPID:12,OFFSET:0",
+                "DIM:1,LOOPID:14,OFFSET:0",
+                "DIM:1,LOOPID:16,OFFSET:0",
+                "DIM:2,LOOPID:15,OFFSET:0",
+                "DIM:2,LOOPID:17,OFFSET:0",
+                "DIM:3,LOOPID:13,OFFSET:0"
+              ]
+            }
+          }
+        },
+        {
+          "op_type": "loop",
+          "op_id": 44,
+          "start": 0,
+          "end": 64,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "loop",
+          "op_id": 46,
+          "start": 0,
+          "end": 1,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "loop",
+          "op_id": 48,
+          "start": 0,
+          "end": 64,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "loop",
+          "op_id": 50,
+          "start": 0,
+          "end": 1,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "loop",
+          "op_id": 52,
+          "start": 0,
+          "end": 1,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "loop",
+          "op_id": 54,
+          "start": 0,
+          "end": 6,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "loop",
+          "op_id": 56,
+          "start": 0,
+          "end": 12,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "compute",
+          "op_id": 16,
+          "operation_name": "MVMUL",
+          "target": "pe_array",
+          "sources": [
+            "data",
+            "weight",
+            "bias",
+            "conv_out"
+          ],
+          "destinations": [
+            "conv_out"
+          ]
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 57,
+          "loop_name": "loop17"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 55,
+          "loop_name": "loop16"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 53,
+          "loop_name": "loop15"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 51,
+          "loop_name": "loop14"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 49,
+          "loop_name": "loop13"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 47,
+          "loop_name": "loop12"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 45,
+          "loop_name": "loop11"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 17,
+          "loop_name": "loop6"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 18,
+          "loop_name": "loop5"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 19,
+          "loop_name": "loop4"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 20,
+          "loop_name": "loop3"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 21,
+          "loop_name": "loop2"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 22,
+          "loop_name": "loop1"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 23,
+          "loop_name": "loop0"
+        },
+        {
+          "op_type": "config",
+          "op_id": 24,
+          "start_or_finish": "end",
+          "target": "WBUF"
+        },
+        {
+          "op_type": "config",
+          "op_id": 25,
+          "start_or_finish": "end",
+          "target": "BBUF"
+        },
+        {
+          "op_type": "config",
+          "op_id": 26,
+          "start_or_finish": "end",
+          "target": "IBUF"
+        },
+        {
+          "op_type": "config",
+          "op_id": 27,
+          "start_or_finish": "end",
+          "target": "OBUF"
+        },
+        {
+          "op_type": "config",
+          "op_id": 28,
+          "start_or_finish": "end",
+          "target": "systolic_array"
+        },
+        {
+          "op_type": "config",
+          "op_id": 29,
+          "start_or_finish": "start",
+          "target": "SIMD"
+        },
+        {
+          "op_type": "config",
+          "op_id": 30,
+          "start_or_finish": "start",
+          "target": "IMM"
+        },
+        {
+          "op_type": "config",
+          "op_id": 31,
+          "start_or_finish": "start",
+          "target": "IMM"
+        },
+        {
+          "op_type": "config",
+          "op_id": 32,
+          "start_or_finish": "start",
+          "target": "IMM"
+        },
+        {
+          "op_type": "loop",
+          "op_id": 33,
+          "start": 0,
+          "end": 64,
+          "offset": 0,
+          "stride": 64
+        },
+        {
+          "op_type": "loop",
+          "op_id": 34,
+          "start": 0,
+          "end": 1,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "loop",
+          "op_id": 35,
+          "start": 0,
+          "end": 12,
+          "offset": 0,
+          "stride": 6
+        },
+        {
+          "op_type": "loop",
+          "op_id": 36,
+          "start": 0,
+          "end": 12,
+          "offset": 0,
+          "stride": 12
+        },
+        {
+          "op_type": "loop",
+          "op_id": 70,
+          "start": 0,
+          "end": 64,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "loop",
+          "op_id": 72,
+          "start": 0,
+          "end": 1,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "loop",
+          "op_id": 74,
+          "start": 0,
+          "end": 6,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "loop",
+          "op_id": 76,
+          "start": 0,
+          "end": 12,
+          "offset": 0,
+          "stride": 1
+        },
+        {
+          "op_type": "compute",
+          "op_id": 37,
+          "operation_name": "RELU",
+          "target": "SIMD",
+          "sources": [
+            "conv_out",
+            "temp0"
+          ],
+          "destinations": [
+            "out"
+          ]
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 77,
+          "loop_name": "loop21"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 75,
+          "loop_name": "loop20"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 73,
+          "loop_name": "loop19"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 71,
+          "loop_name": "loop18"
+        },
+        {
+          "op_type": "transfer",
+          "op_id": 38,
+          "operand": "out",
+          "transfer_path": [
+            "VMEM2",
+            "DRAM"
+          ],
+          "transfers": {
+            "SIMD->VMEM2": {
+              "size": 4608,
+              "offset": [
+                "DIM:0,LOOPID:19,OFFSET:0",
+                "DIM:1,LOOPID:20,OFFSET:0",
+                "DIM:2,LOOPID:21,OFFSET:0",
+                "DIM:3,LOOPID:18,OFFSET:0"
+              ]
+            },
+            "VMEM2->DRAM": {
+              "size": 9216,
+              "offset": [
+                "DIM:0,LOOPID:8,OFFSET:0",
+                "DIM:1,LOOPID:9,OFFSET:0",
+                "DIM:2,LOOPID:10,OFFSET:0",
+                "DIM:3,LOOPID:7,OFFSET:0"
+              ]
+            }
+          }
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 39,
+          "loop_name": "loop10"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 40,
+          "loop_name": "loop9"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 41,
+          "loop_name": "loop8"
+        },
+        {
+          "op_type": "loop_end",
+          "op_id": 42,
+          "loop_name": "loop7"
+        },
+        {
+          "op_type": "config",
+          "op_id": 43,
+          "start_or_finish": "end",
+          "target": "SIMD"
+        }
+      ]
+    },
+    "BLOCK_END 1"
+  ]
+}
