@@ -19,17 +19,6 @@ Note: For RTL Simulation, the DNN accelerator's memory channels require an AXI S
 
 # Running tests on RTL Simulator:
 
-* Step 1. Clone this repo <br />
-* Step 2. Open verif/systolic_array/systolic_fpga_benchmark_config.vh and make sure that the path to lines  <br />
-        26 through 40 and 63 through 77 are accessible. You might need to add the absolute path depending on  <br />
-        the simulator setup.<br />
-* Step 3. (optional) To run ResNet50 GEMM, uncomment line 1. By default, it will run ResNet50 convolution layer.<br />
-* Step 4. Open RTL Simulator (preferably Xilinx Vivado) and load all the files from *src* and *verif* directories.<br />
-* Step 5. Run RTL Simulation with *systolic_fpga_tb.sv* testbench as the top module. Please ensure that the Xilinx
-        Verification IPs are present in the heirarchy. This might require a Xilinx Vivado License. <br />
-* Step 6. Once the simulation is over, the TCL Command window in Vivado should display "TEST PASSED". <br />
-
-
 * Step 1. Clone this repo. <br />
 * Step 2. Open genesys_systolic/testbench/generic_tb_files/systolic_fpga_benchmark_config.vh and add an entry with  <br />
           the respective instruction, input and output files you might want to use. You may use the given  <br />
@@ -108,6 +97,4 @@ Comprehensive metrics can be found in ./emu_logs/metrics.csv  <br />
 
 For any questions, please feel free to send us an email at <br />
 * rohan@ucsd.edu (Rohan Mahapatra)  <br />
-* hax032@eng.ucsd.edu (Hanyang Xu) <br />
-* lkarthik@ucsd.edu (Lavanya Karthikeyan) <br />
 * soghodra@eng.ucsd.edu (Soroush Ghodrati) <br />
