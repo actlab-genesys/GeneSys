@@ -20,15 +20,16 @@ Note: For RTL Simulation, the DNN accelerator's memory channels require an AXI S
 # Running tests on RTL Simulator:
 
 * Step 1. Clone this repo. <br />
-* Step 2. Open genesys_systolic/testbench/generic_tb_files/systolic_fpga_benchmark_config.vh and add an entry with  <br />
-          the respective instruction, input and output files you might want to use. You may use the given  <br />
-          templates. Ensure you use absolute paths to avoid errors. Ensure valid paths are given for all the file  <br /> variables as shown in the template even if it is not applicable to your test. For eg. ADD_ONLY  <br />
-          test does not need a bias input, nevertheless a valid path is given for the variable.  <br />
-* Step 3. Start Vivado and add all the files in the subdirectories of genesys_systolic/source/ and  <br />
-          genesys_systolic/testbench/generic_tb_files/ as sources.  <br />
-* Step 4. Check the configuration of your test. For eg. if your test requires a 16x16 systolic array,  <br />
+* Step 2. Choose a configuration for your test. For eg. if you want to run a test on a 16x16 systolic array,  <br />
           edit genesys_systolic/source/config.vh to ensure that ARRAY_N and ARRAY_M are set to 16.  <br />
-* Step 5. You will need to generate the AXI Verification IPs for running simulation. In Vivado,  <br />
+          Also make sure that the compiler is configured for 16 x 16 systolic array. Once you had compiled the instructions. 
+* Step 3. Open genesys_systolic/testbench/generic_tb_files/systolic_fpga_benchmark_config.vh and add an entry with  <br />
+          the respective instruction, input and output files generated from the compiler. You could use one of the example entries too for sanity check or as an example. <br />
+          Ensure you use absolute paths to avoid errors. Ensure valid paths are given for all the file  <br /> variables as shown in the template even if it is not applicable to your test. For eg. ADD_ONLY  <br />
+          test does not need a bias input, nevertheless a valid path is given for the variable.  <br />
+* Step 4. Start Vivado and add all the files in the subdirectories of genesys_systolic/source/ and  <br />
+          genesys_systolic/testbench/generic_tb_files/ as sources.  <br />
+* Step 4. You will need to generate the AXI Verification IPs for running simulation. In Vivado,  <br />
           go to IP Catalog and look for AXI Verification IP. Six AXI VIPs need to be created and use  <br />
           the same names as below. This might require a Xilinx Vivado License. <br />
 
