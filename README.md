@@ -29,7 +29,20 @@ Note: For RTL Simulation, the DNN accelerator's memory channels require an AXI S
           test does not need a bias input, nevertheless a valid path is given for the variable.  <br />
 * Step 4. Start Vivado and add all the files in the subdirectories of genesys_systolic/source/ and  <br />
           genesys_systolic/testbench/generic_tb_files/ as sources.  <br />
-* Step 4. You will need to generate the AXI Verification IPs for running simulation. In Vivado,  <br />
+* Step 5. You will need to generate the AXI Verification IPs for running simulation. In Vivado,  <br />
+          go to IP Catalog and look for AXI Verification IP. Six AXI VIPs need to be created and use  <br />
+          the same names as below. This might require a Xilinx Vivado License. <br />
+
+# Example: Running RESNET50 Layers on 16 x 16 Configuration:
+
+* Step 1. Clone this repo. <br />
+* Step 2. Download pre-compiled Resnet50 Layers from testcases/benchmarks/benchmark.md<br />
+* Step 3. Open genesys_systolic/testbench/generic_tb_files/systolic_fpga_benchmark_config.vh and add an entry with  <br />
+          the respective instruction, input and output files generated from the compiler similar to one of the example entries already present in the file. <br />
+          Ensure you use absolute paths to avoid errors. Ensure valid paths are given for all the file  <br /> variables as shown in the template even if it is not applicable to your test.
+* Step 4. Start Vivado and add all the files in the subdirectories of genesys_systolic/source/ and  <br />
+          genesys_systolic/testbench/generic_tb_files/ as sources.  <br />
+* Step 5. You will need to generate the AXI Verification IPs for running simulation. In Vivado,  <br />
           go to IP Catalog and look for AXI Verification IP. Six AXI VIPs need to be created and use  <br />
           the same names as below. This might require a Xilinx Vivado License. <br />
 
