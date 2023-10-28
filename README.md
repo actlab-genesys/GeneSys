@@ -91,6 +91,12 @@ Next to run the binary a software executable (host driver) should be built. For 
 * Step 3. ./CONV_RELU systolic_fpga.hw.xclbin (for FPGA) or ./CONV_RELU systolic_fpga.hw_emu.xclbin (for FPGA Emulation) <br />
 * Step 4. If the test run was successful, "TEST PASSED" is displayed on the console. <br />
 
+Alternatively you may use the available Python Driver (host_py driver). This driver automatically generates the software executable. 
+* Step 1. cd fpga_framework <br />
+* Step 2. In fpga_framework/host_py/host.py, set the following paths - test_name, data_info_file, base_path, genesys_binary  <br />
+* Step 3. python3 host.py
+
+
 # Running regression test suite on FPGA or FPGA Emulation:
 
 Once you have the binary instead of individually launching tests you may also use regression scripts to run multiple tests on either FPGA or FPGA Emulation.  <br />
