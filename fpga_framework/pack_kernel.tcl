@@ -2,10 +2,14 @@
 
 # create ip project with part name in command line argvs
 # Remove this if using the same project
-create_project genesys_systolic_fpga ./genesys_systolic_fpga -part [lindex $argv 0]
-set_property part xcu280-fsvh2892-2L-e [current_project]
-set_property rtlkernel.dsa_name /opt/xilinx/platforms/xilinx_u280_xdma_201920_1/hw/xilinx_u280_xdma_201920_1.xsa [current_project]
-set xpfm_path /opt/xilinx/platforms/xilinx_u280_xdma_201920_1/xilinx_u280_xdma_201920_1.xpfm
+
+# create_project genesys_systolic_fpga ./genesys_systolic_fpga -part [lindex $argv 0]
+# set_property part xcvup9p-flgb2104-2-i [current_project]
+
+create_project genesys_systolic_fpga ./genesys_systolic_fpga
+set_property rtlkernel.dsa_name /opt/xilinx/platforms/xilinx_aws-vu9p-f1_shell-v04261818_201920_3/hw/xilinx_u280_xdma_201920_1.xsa [current_project]
+
+set xpfm_path /opt/xilinx/platforms/xilinx_aws-vu9p-f1_shell-v04261818_201920_3/xilinx_aws-vu9p-f1_shell-v04261818_201920_3.xpfm
 set kernel_wizard_dict [get_param rtl_kernel_wizard.features]
 if {[expr [llength $kernel_wizard_dict] % 2]} {
 set kernel_wizard_dict [dict create xpfm_path $xpfm_path]
