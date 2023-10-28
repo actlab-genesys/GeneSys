@@ -33,14 +33,13 @@ SRC_PATH := $(CWD)/../genesys-systolic
 #PART := xcu200-fsgd2104-2-e
 #PART := cu250-figd2104-2L-e
 #PART := xcu50-fsvh2104-2-e
-PART := xcu280-fsvh2892-2L-e
+PART := xcvup9p-flgb2104-2-i
 
 # PLATFORM setting: uncomment the lin matching your Alveo card
-PLATFORM := xilinx_u280_xdma_201920_1
+PLATFORM := xilinx_aws-vu9p-f1_shell-v04261818_201920_3
 
 # TARGET: set the build target, can be hw or hw_emu
 TARGET := hw_emu
-
 
 .phony: clean traces
 
@@ -82,17 +81,14 @@ DEBUG_OPT := --debug.chipscope systolic_fpga_1 --debug.protocol all --profile_ke
 
 INCREMENTAL_BUILD := vpl.synth
 
-
 build_hw:
 	v++ $(XOCCLFLAGS) $(XOCCFLAGS)  --config systolic_fpga.cfg --kernel_frequency 0:10 -o systolic_fpga.$(TARGET).xclbin systolic_fpga.xo
 
-
-
 ################## software build for XRT Native API code
-CXXFLAGS := -std=c++14 -Wno-deprecated-declarations -D$(TEST_NAME)
+CXXFLAGS := -std=c++1y -Wno-deprecated-declarations -D$(TEST_NAME)
 CXXFLAGS += -I$(XILINX_XRT)/include
 LDFLAGS := -L$(XILINX_XRT)/lib
-LDFLAGS += $(LDFLAGS) -lxrt_coreutil -lssl -lcrypto -lpthread
+LDFLAGS += $(LDFLAGS) -lpthread
 #EXECUTABLE := genesys_driver
 EXECUTABLE := $(TARGET_DIR)/$(TEST_NAME)
 
@@ -101,7 +97,7 @@ HOST_INCLUDES := -I./host/
 build_sw: $(EXECUTABLE)
 
 $(EXECUTABLE): $(HOST_SRCS)
-	$(CXX) -o $(EXECUTABLE) $^ $(CXXFLAGS) $(LDFLAGS) $(HOST_INCLUDES) -lOpenCL  
+	$(CXX) -o $(EXECUTABLE) $^ $(CXXFLAGS) $(LDFLAGS) $(HOST_INCLUDES) -lOpenCL -ljsoncpp
 
 
 UTILITY_EXEC := openCL_version_checker
