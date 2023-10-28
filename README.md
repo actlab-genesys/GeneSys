@@ -20,7 +20,7 @@ Note: For RTL Simulation the DNN accelerator's memory channels require an AXI Sl
       We have used Xilinx AXI Verification IP (https://www.xilinx.com/products/intellectual-property/axi-vip.html).
 
 # Running Compiler
-TODO
+Please refer to the README in the compiler folder! You will find step by step instructions there!
 
 
 # Running tests on RTL Simulator:
