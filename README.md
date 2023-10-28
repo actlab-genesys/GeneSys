@@ -9,6 +9,8 @@ to the host via the PCIe bus.
 
 The target workloads for GeneSys are CNNs, RNNs/LSTM and Transformers.
 
+This README describes how to run GeneSys on a local FPGA instance. We do support running on AWS as well. Please refer to the aws_guide for instructions.
+
 # Software Requirements
 
 OS: Ubuntu 18.04.4 LTS
