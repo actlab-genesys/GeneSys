@@ -13,7 +13,7 @@ The target workloads for GeneSys are CNNs, RNNs/LSTM and Transformers.
 OS: Ubuntu 18.04.4 LTS
 RTL Simulation Tool: Xilinx Vivado 2020.2 and Xilinx Vitis 2020.2
 
-Note: For RTL Simulation, the DNN accelerator's memory channels require an AXI Slave Verification IP.
+Note: For RTL Simulation the DNN accelerator's memory channels require an AXI Slave Verification IP.
       We have used Xilinx AXI Verification IP (https://www.xilinx.com/products/intellectual-property/axi-vip.html).
 
 
