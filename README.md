@@ -17,6 +17,9 @@ RTL Simulation Tool: Xilinx Vivado 2020.2 and Xilinx Vitis 2020.2
 Note: For RTL Simulation the DNN accelerator's memory channels require an AXI Slave Verification IP.
       We have used Xilinx AXI Verification IP (https://www.xilinx.com/products/intellectual-property/axi-vip.html).
 
+# Running Compiler
+TODO
+
 
 # Running tests on RTL Simulator:
 
