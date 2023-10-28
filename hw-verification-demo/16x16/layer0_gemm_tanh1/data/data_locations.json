@@ -1,0 +1,26 @@
+{
+  "onnx::Gemm_0_A": {
+    "cdlt": "gemm_tanh1",
+    "path": "/Users/cpriebe/Projects/Research/GeneSys.codelets/genesys_compiler_output/ppo_model_genesys16x16/layer0_gemm_tanh1/data/onnx::Gemm_0_A.txt",
+    "cdlt_name": "data",
+    "operand_type": "input"
+  },
+  "extractor.policy_net.0.weight": {
+    "cdlt": "gemm_tanh1",
+    "path": "/Users/cpriebe/Projects/Research/GeneSys.codelets/genesys_compiler_output/ppo_model_genesys16x16/layer0_gemm_tanh1/data/extractor.policy_net.0.weight.txt",
+    "cdlt_name": "weight",
+    "operand_type": "input"
+  },
+  "extractor.policy_net.0.bias": {
+    "cdlt": "gemm_tanh1",
+    "path": "/Users/cpriebe/Projects/Research/GeneSys.codelets/genesys_compiler_output/ppo_model_genesys16x16/layer0_gemm_tanh1/data/extractor.policy_net.0.bias.txt",
+    "cdlt_name": "bias",
+    "operand_type": "input"
+  },
+  "onnx::Gemm_14_Y": {
+    "cdlt": "gemm_tanh1",
+    "path": "/Users/cpriebe/Projects/Research/GeneSys.codelets/genesys_compiler_output/ppo_model_genesys16x16/layer0_gemm_tanh1/data/onnx::Gemm_14_Y.txt",
+    "cdlt_name": "out",
+    "operand_type": "output"
+  }
+}
