@@ -36,8 +36,10 @@ dependencies:
       - idna==3.4
       - importlib-resources==6.1.0
       - jinja2==3.1.2
+      - kiwisolver==1.4.5
       - markdown-it-py==3.0.0
       - markupsafe==2.1.3
+      - matplotlib==3.7.3
       - mdurl==0.1.2
       - mpmath==1.3.0
       - networkx==3.1
@@ -63,13 +65,16 @@ dependencies:
       - platformdirs==3.11.0
       - protobuf==4.24.4
       - pygments==2.16.1
+      - pyopencl==2023.1.4
       - pyparsing==3.1.1
       - pyqt5==5.15.10
       - pyqt5-qt5==5.15.2
       - pyqt5-sip==12.13.0
+      - python-dateutil==2.8.2
       - pytools==2023.1.1
       - requests==2.31.0
       - rich==13.6.0
+      - six==1.16.0
       - sympy==1.12
       - tk==0.1.0
       - torch==2.1.0
@@ -79,4 +84,4 @@ dependencies:
       - typing-extensions==4.8.0
       - urllib3==2.0.7
       - zipp==3.17.0
-prefix: /home/harsha/miniconda3/envs/compiler_micro
+prefix: /home/centos/miniconda3/envs/genesys
