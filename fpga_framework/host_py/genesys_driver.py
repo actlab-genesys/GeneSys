@@ -199,6 +199,7 @@ class GenesysDriver:
         data_info_f = open(self.data_info_file)
         data_info = json.load(data_info_f)
         file_path = ""
+        mismatch=0
         for (layer,value) in data_info.items():
             layer_outputs = data_info[layer]["outputs"]
             for layer_output in layer_outputs.items():
@@ -214,11 +215,18 @@ class GenesysDriver:
                     if ((layer_output[1].get("buffer") == "VMEM1") or  (layer_output[1].get("buffer") == "VMEM2")):
                         if ( ((golden_output[i] - self.host_systolic_input_buffer[int(offset)+i]) > 1) or ((golden_output[i] - self.host_systolic_input_buffer[int(offset)+i]) < -1)):
                             print("comparison fail, i="+str(i)+", expected=" + str(golden_output[i]) + ", actual="+ str(self.host_systolic_input_buffer[int(offset)+i]))
+                            mismatch=1
+                            break
                     else:
                         if ( ((golden_output[i] - self.host_systolic_input_buffer[int(offset)+i]) > 1) or ((golden_output[i] - self.host_systolic_input_buffer[int(offset)+i]) < -1)):
                             print("comparison fail, i="+str(i)+", expected=" + str(golden_output[i]) + ", actual="+ str(self.host_systolic_input_buffer[int(offset)+i])) 
-
-
+                            mismatch=1
+                            break
+        if (mismatch):
+            print("******* TEST FAILED *******")
+        else:
+            print("******* TEST PASSED *******")
+            
     def run(self):
         if self.ctx is None:
             raise RuntimeError("No valid context set, use init_context() to create context and set using set_context()")
