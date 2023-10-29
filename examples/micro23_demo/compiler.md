@@ -21,7 +21,7 @@ You should see a computation graph of a ResNet.
 Navigate to the ```GeneSys``` directory and run the following command to compile. Make sure to fill in ```ONNX_PATH``` with the path to the ResNet50 ONNX file:
 
 ```console
-$ python3 compile.py –m <ONNX_PATH> -e “default”
+$ compile-genesys –m <ONNX_PATH> -e “default”
 ```
 
 You should see a new folder in the current working directory called ```genesys_compiler_output``` with the following structure.
@@ -107,7 +107,7 @@ with cdlt.loop(N) as n:
 Navigate back to the ```GeneSys``` directory and run the following command to compile. Make sure to fill in ```ONNX_PATH``` with the path to the ResNet50 ONNX file.
 
 ```console
-$ python3 compile.py –m <ONNX_PATH> -e “loop_order”
+$ compile-genesys –m <ONNX_PATH> -e “loop_order”
 ```
 
 You should see a new folder under ```genesys_compiler_output```:
@@ -177,7 +177,7 @@ The first-level key specifies the name of the layer you want to set tiling for. 
 Run the following command to compile. Make sure to fill in ```ONNX_PATH``` with the path to the ResNet50 ONNX file.
 
 ```console
-$ python3 compile.py –m <ONNX_PATH> -t “tiling.json” -e “tiling”
+$ compile-genesys –m <ONNX_PATH> -t “tiling.json” -e “tiling”
 ```
 
 You should see a new folder under ```genesys_compiler_output```:
@@ -253,7 +253,7 @@ cdlt.transfer(data, [“DRAM”, “VMEM2”])
 Navigate back to the ```GeneSys``` directory and run the following command to compile. Make sure to fill in ```ONNX_PATH``` with the path to the ResNet50 ONNX file.
 
 ```console
-$ python3 compile.py –m <ONNX_PATH> -e “on_chip_use”
+$ compile-genesys –m <ONNX_PATH> -e “on_chip_use”
 ```
 
 You should see a new folder under ```genesys_compiler_output```:
@@ -274,7 +274,7 @@ genesys_compiler_output
 Navigate back to the ```GeneSys``` directory and run the following command to compile. Make sure to fill in ```ONNX_PATH``` with the path to the ResNet50 ONNX file.
 
 ```console
-$ python3 compile.py –m <ONNX_PATH> -f -e “fused
+$ compile-genesys –m <ONNX_PATH> -f -e “fused
 ```
 
 You should see a new folder under ```genesys_compiler_output```:
@@ -305,7 +305,7 @@ Navigate to the BERT ONNX file you just downloaded and select it.
 Navigate to the ```GeneSys``` directory and run the following command to compile. Make sure to fill in ```ONNX_PATH``` with the path to the BERT ONNX file:
 
 ```console
-$ python3 compile.py –m <ONNX_PATH> -e “default”
+$ compile-genesys –m <ONNX_PATH> -e “default”
 ```
 
 You should see a new folder in the current working directory called ```genesys_compiler_output``` with the following structure.
