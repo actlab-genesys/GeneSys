@@ -22,7 +22,7 @@ set cwd [lindex $argv 2]
 
 # add design sources into project
 #Using subst is not good practice, keep now for ease of use
-add_files $src_path/source/include/config.vh
+add_files $src_path/testbench/generic_tb_files/config.vh
 add_files [subst { $src_path/source/genesys_src/tag_sync.v \
   $src_path/source/genesys_src/pe.v \
   $src_path/source/genesys_src/compute_addr_gen.v \
