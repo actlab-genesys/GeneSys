@@ -13,15 +13,22 @@ Click [here](../../README.md) for instructions on how to do this.
 * Turn-on layer fusion
 
 ### Compile ResNet50
-Download the ResNet50 ONNX model [here](https://drive.google.com/file/d/12DxCALFbnzNg9NCMogKq92-MtNA-KMqf/view?usp=sharing).
+On your personal device, download the ResNet50 ONNX model [here](https://drive.google.com/file/d/12DxCALFbnzNg9NCMogKq92-MtNA-KMqf/view?usp=sharing).
 Open Netron either using the client or in a web browser [here](https://netron.app/).
 Click ```Open model``` in the center of the web page.
 Navigate to the ResNet50 ONNX file you just downloaded and select it.
 You should see a computation graph of a ResNet.
+
+Move the ONNX file to the AWS instance using this command. Make sure to fill in each of the fields:
+```console
+$ scp -i <KEY_FILE_PATH> <ONNX_PATH_ON_USER_DEVICE> centos@<PRIVATE_IP>:<ONNX_PATH_ON_AWS>
+```
+
+Go to the terminal you have connected to the AWS instance through.
 Navigate to the ```GeneSys``` directory and run the following command to compile. Make sure to fill in ```ONNX_PATH``` with the path to the ResNet50 ONNX file:
 
 ```console
-$ compile-genesys –m <ONNX_PATH> -e "default
+$ compile-genesys -m <ONNX_PATH> -e "default
 ```
 
 You should see a new folder in the current working directory called ```genesys_compiler_output``` with the following structure.
@@ -109,7 +116,7 @@ with cdlt.loop(N) as n:
 Navigate back to the ```GeneSys``` directory and run the following command to compile. Make sure to fill in ```ONNX_PATH``` with the path to the ResNet50 ONNX file.
 
 ```console
-$ compile-genesys –m <ONNX_PATH> -e "loop_order"
+$ compile-genesys -m <ONNX_PATH> -e "loop_order"
 ```
 
 You should see a new folder under ```genesys_compiler_output```:
@@ -179,7 +186,7 @@ The first-level key specifies the name of the layer you want to set tiling for. 
 Run the following command to compile. Make sure to fill in ```ONNX_PATH``` with the path to the ResNet50 ONNX file.
 
 ```console
-$ compile-genesys –m <ONNX_PATH> -t "tiling.json" -e "tiling"
+$ compile-genesys -m <ONNX_PATH> -t "tiling.json" -e "tiling"
 ```
 
 You should see a new folder under ```genesys_compiler_output```:
@@ -257,7 +264,7 @@ cdlt.transfer(data, ["DRAM", "VMEM2"])
 Navigate back to the ```GeneSys``` directory and run the following command to compile. Make sure to fill in ```ONNX_PATH``` with the path to the ResNet50 ONNX file.
 
 ```console
-$ compile-genesys –m <ONNX_PATH> -e "on_chip_use"
+$ compile-genesys -m <ONNX_PATH> -e "on_chip_use"
 ```
 
 You should see a new folder under ```genesys_compiler_output```:
@@ -278,7 +285,7 @@ genesys_compiler_output
 Navigate back to the ```GeneSys``` directory and run the following command to compile. Make sure to fill in ```ONNX_PATH``` with the path to the ResNet50 ONNX file.
 
 ```console
-$ compile-genesys –m <ONNX_PATH> -f -e "fused
+$ compile-genesys -m <ONNX_PATH> -f -e "fused"
 ```
 
 You should see a new folder under ```genesys_compiler_output```:
@@ -301,15 +308,21 @@ genesys_compiler_output
 * Compile BERT
 
 ### Compile BERT
-Download the BERT ONNX model [here](https://drive.google.com/file/d/1iFv_gsh4xO1gvOcVKJEHBuuy8-nRuyOF/view?usp=sharing).
+On your personal device, download the BERT ONNX model [here](https://drive.google.com/file/d/1iFv_gsh4xO1gvOcVKJEHBuuy8-nRuyOF/view?usp=sharing).
 Open Netron either using the client or in a web browser [here](https://netron.app/).
 Click ```Open model``` in the center of the web page.
 Navigate to the BERT ONNX file you just downloaded and select it.
 
+Move the ONNX file to the AWS instance using this command. Make sure to fill in each of the fields:
+```console
+$ scp -i <KEY_FILE_PATH> <ONNX_PATH_ON_USER_DEVICE> centos@<PRIVATE_IP>:<ONNX_PATH_ON_AWS>
+```
+
+Go to the terminal you have connected to the AWS instance through.
 Navigate to the ```GeneSys``` directory and run the following command to compile. Make sure to fill in ```ONNX_PATH``` with the path to the BERT ONNX file:
 
 ```console
-$ compile-genesys –m <ONNX_PATH> -e "default"
+$ compile-genesys -m <ONNX_PATH> -e "default"
 ```
 
 You should see a new folder in the current working directory called ```genesys_compiler_output``` with the following structure.
