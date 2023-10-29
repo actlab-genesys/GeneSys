@@ -12,8 +12,7 @@ int num_output = 0 ;
 // ------------------------------------------------------------------------------------
 // Main program
 // ------------------------------------------------------------------------------------
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {    
     int reg_initialize_val = 0;
    // int wait_var = 0;
     long addr_initialize_val = 0;
@@ -28,7 +27,7 @@ int main(int argc, char** argv)
     cl_ulong time_start, time_end, exec_time;
     cl::Event timing_event;
 
-    std::string binaryFile = (argc != 2) ? "systolic_fpga.hw_emu.xclbin" : argv[1];
+    std::string binaryFile = (argc != 2) ? "systolic_fpga.hw.xclbin" : argv[1];
     unsigned fileBufSize;    
     // adds the list of xilinx devices into the stl  vector
     std::vector<cl::Device> devices = get_xilinx_devices();
@@ -36,18 +35,18 @@ int main(int argc, char** argv)
     devices.resize(1);
     cl::Device device = devices[0];
     cl::Context context(device, NULL, NULL, NULL, &err);
-    char* fileBuf = read_binary_file(binaryFile, fileBufSize);
+    char* fileBuf = read_binary_file(binaryFile, fileBufSize); 
     cl::Program::Binaries bins{{fileBuf, fileBufSize}};
     // program the FPGA
     cl::Program program(context, devices, bins, NULL, &err);
-    // command queue and the kernel object are created
+    // command queue and the kernel object are created 
     cl::CommandQueue q(context, device, CL_QUEUE_PROFILING_ENABLE, &err);
     cl::Kernel systolic_fpga_krnl(program,"systolic_fpga", &err);
 
 // ------------------------------------------------------------------------------------
 // Step 2: Create buffers and initialize test values
 // ------------------------------------------------------------------------------------
-    // Create the buffers and allocate memory   
+    // Create the buffers and allocate memory    
     /*
     On data-center platforms, it is more efficient to allocate memory aligned on 4k page boundaries. 
     On embedded platforms, it is more efficient to perform contiguous memory allocation. 
@@ -55,33 +54,51 @@ int main(int argc, char** argv)
     This is done by using the CL_MEM_ALLOC_HOST_PTR flag when creating the buffers and then mapping the allocated memory to user-space pointers.
     */
    
-    cl::Buffer base_address(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, sizeof(int) * TOTAL_DATA_SIZE_INT, NULL, &err);
-    cl::Buffer outputs(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, sizeof(int) * NUM_OUTPUT * 2, NULL, &err);
-    cl::Buffer simd_outputs(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, sizeof(int) * NUM_OUTPUT * 2, NULL, &err);
-
+    cl::Buffer base_address(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY, sizeof(int)*TOTAL_DATA_NUM, NULL, &err);
+    // cl::Buffer outputs(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE,  sizeof(int)*NUM_OUTPUT, NULL, &err);
+    // cl::Buffer simd_outputs(context, CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE, sizeof(int)*TOTAL_DATA_NUM, NULL, &err);
+    
     // Map host-side buffer memory to user-space pointers (kernel paramters?)
-    int *base_ptr = (int *)q.enqueueMapBuffer(base_address, CL_TRUE, CL_MAP_WRITE, 0, sizeof(int) * TOTAL_DATA_SIZE_INT);
-    int *output_ptr = (int *)q.enqueueMapBuffer(outputs, CL_TRUE, CL_MAP_WRITE | CL_MAP_READ, 0, sizeof(int) * NUM_OUTPUT * 2);
-    int *simd_output_ptr = (int *)q.enqueueMapBuffer(simd_outputs, CL_TRUE, CL_MAP_WRITE | CL_MAP_READ, 0, sizeof(int) * NUM_OUTPUT * 2);
-    
-    
+    int *base_ptr = (int *)q.enqueueMapBuffer(base_address, CL_TRUE, CL_MAP_WRITE, 0, TOTAL_DATA_NUM/4+sizeof(int)*NUM_INPUT);
+    // int *output_ptr = (int *)q.enqueueMapBuffer(outputs, CL_TRUE, CL_MAP_WRITE | CL_MAP_READ, 0, sizeof(int) * (ADDR_OFFSET_OUTPUT/4+NUM_OUTPUT));
+    // int *simd_output_ptr = (int *)q.enqueueMapBuffer(simd_outputs, CL_TRUE, CL_MAP_WRITE | CL_MAP_READ, 0, sizeof(int) * 1);
+
     const int input_addr_iterator = INPUT_ADDR_PTR;
     const int weight_addr_iterator = WEIGHTS_ADDR_PTR;
     const int bias_addr_iterator = BIAS_ADDR_PTR;
-    const int simd_addr_vmem1_iterator = ADDR_OFFSET_VMEM1 ;
-    const int simd_addr_vmem2_iterator = ADDR_OFFSET_VMEM2 ;
-    const int simd_addr_vmem1_ld_iterator = ADDR_OFFSET_VMEM1_LD ;
-    const int simd_addr_vmem2_ld_iterator = ADDR_OFFSET_VMEM2_LD ;
-    
+    const int output_addr_iterator = OUTPUT_ADDR_PTR;
+    const int simd_addr_vmem1_iterator = SIMD_ADDR_VMEM1_PTR ;
+    const int simd_addr_vmem2_iterator = SIMD_ADDR_VMEM2_PTR ;
+    const int simd_addr_vmem1_ld_iterator = SIMD_ADDR_VMEM1_LD_PTR;
+    const int simd_addr_vmem2_ld_iterator = SIMD_ADDR_VMEM2_LD_PTR; 
 
     read_instructions_file(instruction_file, base_ptr,0);
-    read_data_file(bias_file, base_ptr,bias_addr_iterator,0);
-    read_data_file(weight_file, base_ptr,weight_addr_iterator,0);
-    read_data_file(input_file, base_ptr,input_addr_iterator,0);
-    read_data_file(simd_input_file1, simd_output_ptr,simd_addr_vmem1_ld_iterator,0);
-    read_data_file(simd_input_file2, simd_output_ptr,simd_addr_vmem2_ld_iterator,0);
-    initialize_array(output_ptr, 2*NUM_OUTPUT, reg_initialize_val);
-   //initialize_array(simd_output_ptr,2*NUM_OUTPUT, reg_initialize_val);
+    
+    if (bias_file != "") {
+      read_data_file(bias_file, base_ptr, bias_addr_iterator,0);
+    }
+    if (weight_file != "") {
+      read_data_file(weight_file, base_ptr, weight_addr_iterator,0);
+    }
+    if (input_file != "") {
+      read_data_file(input_file, base_ptr, input_addr_iterator,0);
+    }
+    // if (simd_input_file1 != "") {
+    //   read_data_file(simd_input_file1, simd_output_ptr,simd_addr_vmem1_ld_iterator,0);
+    // }
+    // if (simd_input_file2 != "") {
+    //   read_data_file(simd_input_file2, simd_output_ptr,simd_addr_vmem2_ld_iterator,0);
+    // }
+    if (simd_input_file1 != "") {
+      read_data_file(simd_input_file1, base_ptr, simd_addr_vmem1_ld_iterator,0);
+    }
+    if (simd_input_file2 != "") {
+      read_data_file(simd_input_file2, base_ptr, simd_addr_vmem2_ld_iterator,0);
+    }
+
+    //initialize_array(output_ptr, 5*NUM_OUTPUT, reg_initialize_val);
+    //initialize_array(simd_output_ptr,2*NUM_OUTPUT, reg_initialize_val);
+  
 // ------------------------------------------------------------------------------------
 // Step 3: Run the kernel
 // schedule three operations on the command queue: 
@@ -89,14 +106,7 @@ int main(int argc, char** argv)
 //  2. the execution of the kernel
 //  3. lastly the transfer of the results back to host memory
 // ------------------------------------------------------------------------------------
-    
-    //systolic_fpga_krnl.setArg(3, 1);
-    // wait for some time
-   // while (wait_var < 20) 
-   //     wait_var++;
-   // systolic_fpga_krnl.setArg(3, 0);
-    
-    
+
     // Set kernel arguments
     std::cout << "Initialize registers" <<"\n";    
     for (int i = 0; i < 15; i++) {
@@ -110,16 +120,18 @@ int main(int argc, char** argv)
     // writing base address for now. Else getting seg fault    
     systolic_fpga_krnl.setArg(16, base_address);  
     systolic_fpga_krnl.setArg(17, base_address);   
-    systolic_fpga_krnl.setArg(18, outputs);
-    systolic_fpga_krnl.setArg(19, simd_outputs);
+    // systolic_fpga_krnl.setArg(18, outputs);
+    // systolic_fpga_krnl.setArg(19, simd_outputs);
+    systolic_fpga_krnl.setArg(18, base_address);
+    systolic_fpga_krnl.setArg(19, base_address);
 
-    std::cout << "SIMD_pointer:" << simd_output_ptr << std::endl ;
-
+    // std::cout << "SIMD_pointer:" << simd_output_ptr << std::endl ;
     
     // Schedule transfer of inputs to device memory, execution of kernel, and transfer of outputs back to host memory
     std::cout << "Transfer Data to DDR" <<"\n";
     //data_transfer_start = clock();
-    q.enqueueMigrateMemObjects({base_address, outputs, simd_outputs}, 0 /* 0 means from host*/,NULL,&timing_event); 
+    // q.enqueueMigrateMemObjects({base_address, outputs, simd_outputs}, 0 ,NULL,&timing_event); 
+    q.enqueueMigrateMemObjects({base_address}, 0 ,NULL,&timing_event); 
     q.finish();
     timing_event.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
     timing_event.getProfilingInfo(CL_PROFILING_COMMAND_END,&time_end);
@@ -127,12 +139,11 @@ int main(int argc, char** argv)
     printf("Input Transfer Time: %.7lf \n", (double) exec_time/1000000000);
     printf("Input Transfer Cycles: %lf \n", (double) exec_time);
 
-    //time_taken = (double)(clock() - data_transfer_start) ;
-    //std::cout<< "Input Transfer Time: "<<(double)(time_taken)/CLOCKS_PER_SEC << std::endl;
-    //std::cout<< "Input Transfer Cycles: "<<(double)(time_taken) << std::endl;
+    time_taken = (double)(clock() - data_transfer_start) ;
+    std::cout<< "Input Transfer Time: "<<(double)(time_taken)/CLOCKS_PER_SEC << std::endl;
+    std::cout<< "Input Transfer Cycles: "<<(double)(time_taken) << std::endl;
 
-       
-    std::cout << "Execute Program" <<"\n";
+    std::cout << "Execute Program \n";
     stoptime(start, "set up kernel");
     start = clock();
     q.enqueueTask(systolic_fpga_krnl,NULL,&timing_event);
@@ -144,14 +155,15 @@ int main(int argc, char** argv)
     printf("Execution Time: %.7lf \n", (double) exec_time/1000000000);
     printf("Execution Cycles: %lf \n", (double) exec_time);
 
-    //time_taken = (double)(clock() - execution_start) ;
-    //std::cout<< "Execution Time: "<<(double)(time_taken)/CLOCKS_PER_SEC << std::endl;
-    //std::cout<< "Execution Cycles: "<<(double)(time_taken) << std::endl;
+    time_taken = (double)(clock() - execution_start) ;
+    std::cout<< "Execution Time: "<<(double)(time_taken)/CLOCKS_PER_SEC << std::endl;
+    std::cout<< "Execution Cycles: "<<(double)(time_taken) << std::endl;
 
-    //std::cout<< "Execution Time: "<<(double)(clock() - execution_start)/CLOCKS_PER_SEC << std::endl;
+    std::cout<< "Execution Time: "<<(double)(clock() - execution_start)/CLOCKS_PER_SEC << std::endl;
     std::cout << "Copy data from DDR" <<"\n";
     //output_transfer_start = clock();
-    q.enqueueMigrateMemObjects({simd_outputs,outputs}, CL_MIGRATE_MEM_OBJECT_HOST,NULL,&timing_event);
+    // q.enqueueMigrateMemObjects({simd_outputs,outputs}, CL_MIGRATE_MEM_OBJECT_HOST,NULL,&timing_event);
+    q.enqueueMigrateMemObjects({base_address}, CL_MIGRATE_MEM_OBJECT_HOST,NULL,&timing_event);
     q.finish();
     timing_event.getProfilingInfo(CL_PROFILING_COMMAND_START, &time_start);
     timing_event.getProfilingInfo(CL_PROFILING_COMMAND_END,&time_end);
@@ -167,7 +179,6 @@ int main(int argc, char** argv)
     // Wait for all scheduled operations to finish
     //q.finish() is necessary to wait until all enqueued commands run to completion as otherwise computation on the accelerator is non blocking.
     q.finish();
-    
 // ------------------------------------------------------------------------------------
 // Step 4: Check Results and Release Allocated Resources
 // ------------------------------------------------------------------------------------
@@ -175,57 +186,231 @@ int main(int argc, char** argv)
     std::cout << "Output Comparision" <<"\n";
     //std::cout << output_ptr[0] << "\n" ; 
 
-    const int output_addr_iterator = OUTPUT_ADDR_PTR + NUM_OUTPUT;
-    int *output_reference_arr = (int *)q.enqueueMapBuffer(outputs, CL_TRUE, CL_MAP_WRITE | CL_MAP_READ, 0, sizeof(int) * NUM_OUTPUT * 2); 
-    //int output_reference_arr[2*NUM_OUTPUT] ={0};
-    read_data_file(output_file, output_reference_arr,output_addr_iterator ,1);
+    int output_reference_arr[NUM_OUTPUT];
+    read_data_file(output_file, output_reference_arr, 0, 1);
+    
     bool match1 = true;
     bool match2 = true;
     bool match0 = true;
-     
-    std::cout << "First checking OBUF" <<"\n";
-    for (int i = 0 ; i < num_output ; i++){
-        int expected = output_reference_arr[i+NUM_OUTPUT];
-        if (output_ptr[i] != expected){
+    
+    // std::cout << "------------OBUF-------------\n";
+    // for (int i =  0  ; i < num_output ; i++){
+    //     int expected = output_reference_arr[i];
+    //     if (output_ptr[i+output_addr_iterator] != expected){
+    //         std::cout << "Error: Result mismatch" << std::endl;
+    //         std::cout << "i = " << i << " CPU result = " << expected << " Device result = " << output_ptr[i+output_addr_iterator] << std::endl;
+    //         match0 = false;
+    //     }
+    // }
+   
+    // std::cout << "------------vmem2---------\n";
+    // for (int i =  0  ; i < num_output ; i++){
+    //     int expected = output_reference_arr[i];
+        
+    //     if (simd_output_ptr[i+(simd_addr_vmem2_iterator)] != expected){
+    //         std::cout << "Error: Result mismatch" << std::endl;
+    //         std::cout << "i = " << i << " CPU result = " << expected << " Device result = " << simd_output_ptr[i+simd_addr_vmem2_iterator] << std::endl;
+    //         match2 = false;
+    //         break; 
+    //     }
+    // }
+
+    // std::cout << "---------------vmem1-------------\n";
+    // for (int i =  0  ; i < num_output ; i++){
+    //     int expected = output_reference_arr[i];
+    //     if (simd_output_ptr[i+(simd_addr_vmem1_iterator)] != expected){
+    //         std::cout << "Error: Result mismatch" << std::endl;
+    //         std::cout << "i = " << i << " CPU result = " << expected << " Device result = " << simd_output_ptr[i+simd_addr_vmem1_iterator] << std::endl;
+    //         match1 = false;
+    //         break;
+    //     }
+    // }
+
+    std::cout << "------------OBUF-------------\n";
+    for (int i =  0  ; i < num_output ; i++){
+        int expected = output_reference_arr[i];
+        if (base_ptr[i+output_addr_iterator] != expected){
             std::cout << "Error: Result mismatch" << std::endl;
-            std::cout << "i = " << i << " CPU result = " << expected << " Device result = " << output_ptr[i] << std::endl;
+            std::cout << "i = " << i << " CPU result = " << expected << " Device result = " << base_ptr[i+output_addr_iterator] << std::endl;
             match0 = false;
             break;
         }
     }
-
-    std::cout << "OBUF mismatched checking VMEM2" <<"\n";
+   
+    std::cout << "------------vmem2---------\n";
     for (int i =  0  ; i < num_output ; i++){
-        int expected = output_reference_arr[i+NUM_OUTPUT];	
-        if (simd_output_ptr[i+(simd_addr_vmem2_iterator/4)] != expected){
+        int expected = output_reference_arr[i];
+        
+        if (base_ptr[i+(simd_addr_vmem2_iterator)] != expected){
             std::cout << "Error: Result mismatch" << std::endl;
-            std::cout << "i = " << i << " CPU result = " << expected << " Device result = " << simd_output_ptr[i+(simd_addr_vmem2_iterator/4)] << std::endl;
+            std::cout << "i = " << i << " CPU result = " << expected << " Device result = " << base_ptr[i+simd_addr_vmem2_iterator] << std::endl;
             match2 = false;
             break;
         }
     }
-    
-    std::cout << "VMEM2 mismatched checking VMEM1" <<"\n";
+
+    std::cout << "---------------vmem1-------------\n";
     for (int i =  0  ; i < num_output ; i++){
-        int expected = output_reference_arr[i+NUM_OUTPUT];
-        if (simd_output_ptr[i+(simd_addr_vmem1_iterator/4)] != expected){
+        int expected = output_reference_arr[i];
+        if (base_ptr[i+(simd_addr_vmem1_iterator)] != expected){
             std::cout << "Error: Result mismatch" << std::endl;
-            std::cout << "i = " << i << " CPU result = " << expected << " Device result = " << simd_output_ptr[i+(simd_addr_vmem1_iterator/4)] << std::endl;
+            std::cout << "i = " << i << " CPU result = " << expected << " Device result = " << base_ptr[i+simd_addr_vmem1_iterator] << std::endl;
             match1 = false;
             break;
         }
     }
 
-  
+   std::cout << "TEST " << ((match0 || match1 ||match2) ? "PASSED" : "FAILED") << std::endl; 
 
+    // q.enqueueMigrateMemObjects({base_address}, CL_MIGRATE_MEM_OBJECT_HOST,NULL,&timing_event);
+    // q.finish();
+
+    int count = 0;
+    for (int i =  0  ; i < 96 ; i+=16) { // 16 byte per stats, 6 stats
+        int local_i = i;
+        int value = 0;
+
+        if (count ==0) { 
+            value = base_ptr[local_i];
+            std::cout << "pc_num_tiles: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_simd_tot_compute: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_sys_tot_compute: " << value <<  std::endl;
+            local_i+=2 ;
+          //  value = base_ptr[local_i];
+          //  std::cout << "pc_sys_tot_compute: " << value <<  std::endl;
+          //  local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_end2end: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_decode: " << value <<  std::endl;
+        }
+        else if (count ==1){
+            value = base_ptr[local_i];
+            std::cout << "pc_ibuf_size_per_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_ibuf_tot_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_ibuf_tot_cycles: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_ibuf_num_tiles: " << value <<  std::endl;
+        }
+
+        else if (count ==2){
+            value = base_ptr[local_i];
+            std::cout << "pc_obuf_st_size_per_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_obuf_st_tot_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_obuf_st_tot_cycles: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_obuf_st_num_tiles: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_obuf_ld_size_per_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_obuf_ld_tot_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_obuf_ld_tot_cycles: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_obuf_ld_num_tiles: " << value <<  std::endl;
+        }
+        else if (count ==3){
+            value = base_ptr[local_i];
+            std::cout << "pc_bbuf_size_per_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_bbuf_tot_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_bbuf_tot_cycles: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_bbuf_num_tiles: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_wbuf_size_per_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_wbuf_tot_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_wbuf_tot_cycles: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_wbuf_num_tiles: " << value <<  std::endl;
+        }
+	 else if (count ==4){
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem1_st_size_per_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem1_st_tot_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem1_st_tot_cycles: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem1_st_num_tiles: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem1_ld_size_per_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem1_ld_tot_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem1_ld_tot_cycles: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem1_ld_num_tiles: " << value <<  std::endl;
+        }
+	  else if (count ==5){
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem2_st_size_per_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem2_st_tot_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem2_st_tot_cycles: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem2_st_num_tiles: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem2_ld_size_per_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem2_ld_tot_requests: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem2_ld_tot_cycles: " << value <<  std::endl;
+            local_i+=2 ;
+            value = base_ptr[local_i];
+            std::cout << "pc_vmem2_ld_num_tiles: " << value <<  std::endl;
+        }
+        count++;
+    }
     
-
-
     delete[] fileBuf;
 
-    std::cout << "TEST " << ((match0||match1 ||match2) ? "PASSED" : "FAILED") << std::endl; 
-    return ((match1 || match2) ? EXIT_SUCCESS : EXIT_FAILURE);
-
+   std::cout << "TEST " << ((match0 || match1 ||match2) ? "PASSED" : "FAILED") << std::endl; 
+   return ((match0 || match1 || match2) ? EXIT_SUCCESS : EXIT_FAILURE);
+   // return EXIT_FAILURE ;
 }
 
 
@@ -283,7 +468,7 @@ void read_instructions_file(const std::string &file_name, int *arr, int debug_fl
     } 
     std::cout << "INFO: Reading File '" << file_name << "'\n";
     std::ifstream fp(file_name.c_str());
-    
+     
     std::string line;
     int idx = 0;
     long long longLine;
@@ -291,17 +476,20 @@ void read_instructions_file(const std::string &file_name, int *arr, int debug_fl
         while (!fp.eof()) {
             std::getline(fp, line);
             longLine = std::stoll(line);
-	    //std::cout << "Index: " << idx << " String Value: "<< (uint)longLine <<"\n";
-            if (debug_flag == 1) {
-                std::cout<<"size is ="<<line.size()<<"\n";
-                std::cout << "Index: " << idx << " String Value: "<< (uint)longLine <<"\n";
+	    
+        //std::cout << "Index: " << idx << " String Value: "<< (uint)longLine <<"\n";
+        // if (debug_flag == 1) {
+        //         std::cout<<"size is ="<<line.size()<<"\n";
+        //         std::cout << "Index: " << idx << " String Value: "<< (uint)longLine <<"\n";
+        //     }
+
+	    if ((uint) longLine == 295279001 or (uint) longLine == 2952790017 or  (uint) longLine == 2952790016) {
+		    arr[idx++] = (uint) 2952790017;
+		    break;
             }
-            arr[idx++] = (uint)longLine;
-	   // if (idx == 248){
-           //	break;
-	   // }
-        
-        }
+	    arr[idx++] = (uint)longLine;    
+	}
+	std::cout << "Instuction Reading Done\n";
         fp.close();
     }
     else std::cout << "Unable to open the file";
@@ -319,6 +507,7 @@ void read_data_file(const std::string &file_name, int *arr, const int ptr, const
     std::fstream fp(file_name.c_str(), std::ios_base::in);
     
     int local_ptr = ptr;
+    std::cout << "Pointer Addr: " << local_ptr << std::endl ;
     long long line;
     int idx = 0;
     while (fp >> line)
@@ -330,11 +519,16 @@ void read_data_file(const std::string &file_name, int *arr, const int ptr, const
 	//std::cout << "ADDRESS: " << &arr[local_ptr] <<" Value: " << arr[local_ptr] << " \n" << std::endl ;
         local_ptr++;
 	idx++ ;
-	
+//	if (get_num_lines){
+//	if (idx == 1605632)
+//		break;
+//	std::cout << idx << ":: " << local_ptr << std::endl ;
+//	}
     }
     if (get_num_lines){
         num_output = idx ;
     }
+    std::cout << "Pointer Final Addr: " << local_ptr << std::endl ;
 }
 
 
