@@ -392,8 +392,7 @@ end
       end
       FSM_EXECUTE: begin            // 3
         if (block_done) begin
-        	state_d = FSM_NEXT_BLOCK;
-			addr_d = 0; // Hanayng: The read address needs to be reset everytime one layer is done exucting
+          state_d = FSM_NEXT_BLOCK;
         end
       end
       FSM_NEXT_BLOCK: begin

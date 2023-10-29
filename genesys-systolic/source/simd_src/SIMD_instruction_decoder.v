@@ -392,14 +392,14 @@ module SIMD_instruction_decoder
 
 		INST_READ: begin		
 			if(inst_group_ex_end) begin
-			     state_d = IDLE;
-			     num_iterations_d = 'b1;
-			     if (simd_tiles_done) begin
-			         addr_d = addr_q + 'b1;
-			     end
-			     else
-			         addr_d = 0;
-			     imem_rd_v = 1'b1;
+				state_d = IDLE;
+				num_iterations_d = 'b1;
+				if (simd_tiles_done) begin
+					//addr_d = addr_q + 'b1;
+					addr_d = addr_q;
+				end else
+					addr_d = 0;
+				imem_rd_v = 1'b1;
 			end else if (loop_start) begin
 				state_d = nested_loop ? IN_NESTED_LOOP : IN_LOOP;
 				addr_d = addr_q; // nested_loop ? addr_q : addr_q + 1;
@@ -419,11 +419,11 @@ module SIMD_instruction_decoder
                 imem_rd_v = 1'b0;
                 addr_d = addr_q;
                 _stall_d = 1'b1;	
-            end else if (st_mem_simd_done_d) begin
+            end else if (st_mem_simd_done_d) begin // check the state come from ST and end the excution
                 state_d = state_q;
 //		        num_iterations_d = 'b1;
 		        addr_d = addr_q ;
-		        imem_rd_v = 1'b1; 	    
+		        imem_rd_v = 1'b1;
 		    end else begin
 		        state_d = state_q;
 		        num_iterations_d = 'b1;

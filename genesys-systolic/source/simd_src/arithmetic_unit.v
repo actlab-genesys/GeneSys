@@ -26,25 +26,82 @@ module arithmetic_unit #(
     reg signed [BIT_WIDTH-1:0]      mult_out;
     wire [BIT_WIDTH-1:0]            div_out;
     
+    reg overflow;
+    reg underflow;
+    reg overflow_reg;
+    reg underflow_reg;
+    
     assign sum_out = data_in0 + data_in1;
     assign sub_out = data_in0 - data_in1;
- 
+    
+    always @(posedge clk) begin
+        if (reset) begin
+            overflow_reg <= 1'b0;
+        end else if (!overflow_reg && overflow) begin
+            overflow_reg <= 1'b1;
+        end else begin
+            overflow_reg <= overflow_reg;
+        end
+    end
+
+    always @(posedge clk) begin
+        if (reset) begin
+            underflow_reg <= 1'b0;
+        end else if (!underflow_reg && underflow) begin
+            underflow_reg <= 1'b1;
+        end else begin
+            underflow_reg <= underflow_reg;
+        end
+    end
+
     always @(*) begin
         case(sum_out[BIT_WIDTH:BIT_WIDTH-1])
-            2'b01 : sum_final = {1'b0,{BIT_WIDTH-'d1{1'b1}}};
-            2'b10 : sum_final = {1'b1,{BIT_WIDTH-'d1{1'b0}}};
-            default : sum_final = sum_out[BIT_WIDTH-1 : 0];
+            2'b01 : begin
+                overflow = 1'b1;
+                sum_final = {1'b0,{BIT_WIDTH-'d1{1'b1}}}; 
+            end
+            2'b10 : begin
+                underflow = 1'b1;
+                sum_final = {1'b1,{BIT_WIDTH-'d1{1'b0}}};
+            end
+            
+            default : begin
+                overflow = 1'b0;
+                underflow = 1'b0;
+                if (overflow_reg) begin
+                    sum_final = {1'b0,{BIT_WIDTH-'d1{1'b1}}};
+                end else if (underflow_reg) begin
+                    sum_final = {1'b1,{BIT_WIDTH-'d1{1'b0}}};
+                end else begin
+                    sum_final = sum_out[BIT_WIDTH-1 : 0];
+                end
+            end 
         endcase
-    end
-    
-    always @(*) begin
-        case( sub_out[BIT_WIDTH:BIT_WIDTH-1])
-            2'b01 : sub_final = {1'b0,{BIT_WIDTH-'d1{1'b1}}};
-            2'b10 : sub_final = {1'b1,{BIT_WIDTH-'d1{1'b0}}};
-            default : sub_final = sub_out[BIT_WIDTH-1 : 0];
+
+        case(sub_out[BIT_WIDTH:BIT_WIDTH-1])
+            2'b01 : begin
+                overflow = 1'b1;
+                sub_final = {1'b0,{BIT_WIDTH-'d1{1'b1}}};
+            end
+            2'b10 : begin
+                underflow = 1'b1;
+                sub_final = {1'b1,{BIT_WIDTH-'d1{1'b0}}};
+            end
+            
+            default : begin
+                overflow = 1'b0;
+                underflow = 1'b0;
+                if (overflow_reg) begin
+                    sub_final = {1'b0,{BIT_WIDTH-'d1{1'b1}}};
+                end else if (underflow_reg) begin
+                    sub_final = {1'b1,{BIT_WIDTH-'d1{1'b0}}};
+                end else begin
+                    sub_final = sub_out[BIT_WIDTH-1 : 0];
+                end
+            end 
         endcase
-    end
-    
+    end  
+ 
     always @(*) begin
         case(fn)
             4'b0000:    data_out = sum_final;
@@ -65,6 +122,6 @@ module arithmetic_unit #(
             4'b1101:    data_out = data_in0 & data_in1 ;
             4'b1110:    data_out = data_in0 | data_in1 ;
             default:    data_out = data_in0;
-        endcase        
+        endcase
     end
 endmodule

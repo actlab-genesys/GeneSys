@@ -20,8 +20,8 @@ module vector_memory
     input  wire [ DATA_WIDTH*NUM_ELEM  -1 : 0 ]  write_data
  );
     
-    localparam integer BUFFER_DEPTH = 2 << ADDR_WIDTH;
-    localparam integer MEMORY_SIZE = BUFFER_DEPTH * ADDR_WIDTH;
+    localparam integer BUFFER_DEPTH = 1 << ADDR_WIDTH;
+    localparam integer MEMORY_SIZE = BUFFER_DEPTH * DATA_WIDTH;
     localparam integer WRITE_ADDR_WIDTH = ADDR_WIDTH;
     localparam integer READ_ADDR_WIDTH  = ADDR_WIDTH;
     
@@ -36,8 +36,7 @@ module vector_memory
         `ifdef FPGA
         simple_dual_port_xpm #(
             .WRITE_WIDTH        (DATA_WIDTH),     
-            .READ_WIDTH         (DATA_WIDTH),     
-            .BUFFER_DEPTH       (BUFFER_DEPTH),
+            .READ_WIDTH         (DATA_WIDTH),    
             .READ_LATENCY_B     (READ_LATENCY_B), 
             .MEMORY_SIZE        (MEMORY_SIZE),    
             .WRITE_ADDR_WIDTH   (WRITE_ADDR_WIDTH),

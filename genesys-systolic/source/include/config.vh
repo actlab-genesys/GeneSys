@@ -1,122 +1,28 @@
-`define RESNET18_GEMM
-
-//////////////// From Compiler 
-`ifdef RESNET18_GEMM
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 8192;
-    parameter integer  OBUF_DEPTH                   = 8192;
-    parameter integer  WBUF_DEPTH                   = 1024;
-    parameter integer  VMEM_ADDR_WIDTH              = 10;
-    parameter integer  ARRAY_N                      = 16;
-    parameter integer  ARRAY_M                      = 16;
-    parameter integer  INSTR_DEPTH                  = 2048;
-`elsif RESNET_32x32
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 1024;
-    parameter integer  OBUF_DEPTH                   = 1024;
-    parameter integer  WBUF_DEPTH                   = 2048;
-    parameter integer  ARRAY_N                      = 32;
-    parameter integer  ARRAY_M                      = 32;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif  RESNET18_GEMM_MULTIPLE_REQs
-    parameter integer  BBUF_DEPTH                   = 32;
-    parameter integer  IBUF_DEPTH                   = 64;
-    parameter integer  OBUF_DEPTH                   = 64;
-    parameter integer  WBUF_DEPTH                   = 128;
-    parameter integer  ARRAY_N                      = 64;
-    parameter integer  ARRAY_M                      = 64;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif RESNET50_CONV_V1
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 64;
-    parameter integer  ARRAY_M                      = 64;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif CUSTOM_CONV_NON_ALIGNED_REQ
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 64;
-    parameter integer  ARRAY_M                      = 64;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif CUSTOM_CONV_RANDOM_VALS_V3
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 64;
-    parameter integer  ARRAY_M                      = 64;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif CUSTOM_CONV_RANDOM_VALS
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 64;
-    parameter integer  ARRAY_M                      = 64;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif RESNET18_CONV
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 64;
-    parameter integer  ARRAY_M                      = 64;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif LENET_CONV
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 64;
-    parameter integer  ARRAY_M                      = 64;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif CUSTOM_CONV
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 64;
-    parameter integer  ARRAY_M                      = 64;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif CUSTOM_CONV_FIXED_RESULTS
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 64;
-    parameter integer  ARRAY_M                      = 64;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`elsif CUSTOM_CONV_RANDOM_VALS
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 2048;
-    parameter integer  OBUF_DEPTH                   = 2048;
-    parameter integer  WBUF_DEPTH                   = 4096;
-    parameter integer  ARRAY_N                      = 64;
-    parameter integer  ARRAY_M                      = 64;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`else // RESNET18-GEMM
-    parameter integer  BBUF_DEPTH                   = 1024;
-    parameter integer  IBUF_DEPTH                   = 1024;
-    parameter integer  OBUF_DEPTH                   = 1024;
-    parameter integer  WBUF_DEPTH                   = 2048;
-    parameter integer  ARRAY_N                      = 64;
-    parameter integer  ARRAY_M                      = 64;
-    parameter integer  INSTR_DEPTH                  = 1024;
-`endif
-
-
-////////////////// Generic Parameters
-
 parameter integer  NUM_TAGS                     = 2;
 parameter integer  TAG_W                        = $clog2(NUM_TAGS);
 parameter integer  TAG_REUSE_COUNTER_W          = 7;
 parameter integer  ADDR_WIDTH                   = 64;
+//parameter integer  ARRAY_N                      = 16;
+//parameter integer  ARRAY_M                      = 16;
+// Precision
+//parameter integer  DATA_WIDTH                   = 4;
+//parameter integer  BIAS_WIDTH                   = 32;
+//parameter integer  ACC_WIDTH                    = 32;
+// Buffers
+//parameter integer  IBUF_CAPACITY_BITS           = 131072;
+//parameter integer  WBUF_CAPACITY_BITS           = 131072;
+//parameter integer  OBUF_CAPACITY_BITS           = 524288*2;
+//parameter integer  BBUF_CAPACITY_BITS           = 16384;
 
 
+//////////////// From Compiler 
+parameter integer  BBUF_DEPTH                   = 1024;
+parameter integer  IBUF_DEPTH                   = 2048;
+parameter integer  OBUF_DEPTH                   = 2048;
+parameter integer  WBUF_DEPTH                   = 4096;
+parameter integer  ARRAY_N                      = 64;
+parameter integer  ARRAY_M                      = 64;
+parameter integer  INSTR_DEPTH                  = 1024;
 // Precision
 parameter integer  DATA_WIDTH                   = 8;
 parameter integer  BIAS_WIDTH                   = 32;
@@ -124,7 +30,7 @@ parameter integer  ACC_WIDTH                    = 32;
 // Buffers
 parameter integer  IBUF_CAPACITY_BITS           = ARRAY_M * DATA_WIDTH * IBUF_DEPTH;
 parameter integer  WBUF_CAPACITY_BITS           = ARRAY_N * ARRAY_M * DATA_WIDTH * WBUF_DEPTH;
-parameter integer  OBUF_CAPACITY_BITS           = ARRAY_N * ACC_WIDTH * OBUF_DEPTH;
+parameter integer  OBUF_CAPACITY_BITS           = ARRAY_N * ACC_WIDTH * OBUF_DEPTH * 2;
 parameter integer  BBUF_CAPACITY_BITS           = ARRAY_M * ACC_WIDTH * BBUF_DEPTH;
 ////////////////////////////////////
 
@@ -173,10 +79,3 @@ parameter integer OBUF_WSTRB_WIDTH              = OBUF_AXI_DATA_WIDTH / 8;
 parameter integer  CTRL_ADDR_WIDTH              = C_S_AXI_CONTROL_ADDR_WIDTH;
 parameter integer  CTRL_DATA_WIDTH              = C_S_AXI_CONTROL_DATA_WIDTH;
 parameter integer  CTRL_WSTRB_WIDTH             = CTRL_DATA_WIDTH/8;
-
-//SIMD
-parameter integer IMM_ADDR_WIDTH                        = 16;
-parameter integer SIMD_OPCODE_BITS                      = 4;
-parameter integer SIMD_INTERLEAVE                       = 1;
-parameter integer SIMD_FUNCTION_BITS                    = 4;
-parameter integer SIMD_IMEM_ADDR_WIDTH                  = 10;

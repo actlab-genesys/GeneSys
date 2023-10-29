@@ -138,8 +138,6 @@ module systolic_fpga #(
   output wire                                       interrupt               
 );
 
-
-
 // genesys systolic accelerator
 genesys_systolic_wrapper #(
   .C_S_AXI_CONTROL_ADDR_WIDTH    ( C_S_AXI_CONTROL_ADDR_WIDTH    ),

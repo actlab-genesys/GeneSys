@@ -245,6 +245,7 @@ wire [BASE_STRIDE_WIDTH-1 : 0]		base_plus_stride_5;
 
 wire   [FUNCTION_BITS + OPCODE_BITS-1:0]      opcode_fn,opcode_fn_to_iter_mem,opcode_fn_to_mem_stage,opcode_fn_to_mux_stage,opcode_fn_to_compute_stage;
 wire   [IMMEDIATE_WIDTH-1:0]      immediate_to_iter_mem,immediate_to_mem_stage,immediate_to_mux_stage,immediate_to_compute_stage,immediate_final;
+wire   [DATA_WIDTH-1:0]           imm_to_iter_mem,imm_to_mem_stage;
 wire   [7:0]      dest_integer_bits_to_iter_mem, dest_integer_bits_to_mem_stage, dest_integer_bits_to_mux_stage, dest_integer_bits_to_compute_stage;
 wire   [7:0]      src1_integer_bits_to_iter_mem, src1_integer_bits_to_mem_stage, src1_integer_bits_to_mux_stage, src1_integer_bits_to_compute_stage;
 wire   [7:0]      src2_integer_bits_to_iter_mem, src2_integer_bits_to_mem_stage, src2_integer_bits_to_mux_stage, src2_integer_bits_to_compute_stage;
@@ -706,7 +707,8 @@ iterator_address_gen_new #(
     .iterator_data_in_stride_out_5      (	iterator_data_stride_5          ),
     .base_plus_stride_out_5             (   base_plus_stride_5              ),
 	
-    .immediate_out                      (   immediate_to_iter_mem           )
+    .immediate_out                      (   immediate_to_iter_mem           ),
+    .imm_out                            (   imm_to_iter_mem                 )
 );
 
 assign opcode_fn = {opcode,fn};
@@ -863,6 +865,9 @@ pipeline #( .NUM_BITS	( NS_ID_BITS	), .NUM_STAGES	( 1	), .EN_RESET   ( 0 ) ) src
 
 pipeline #( .NUM_BITS	( IMMEDIATE_WIDTH	), .NUM_STAGES	( 1	), .EN_RESET   ( 0 ) ) immediate_delay2 (
     .clk		(	clk		    ), .rst		(	reset		), .data_in	(	immediate_to_iter_mem	), .data_out	(	immediate_to_mem_stage    ) );
+
+pipeline #( .NUM_BITS	( DATA_WIDTH	), .NUM_STAGES	( 1	), .EN_RESET   ( 0 ) ) imm_delay2 (
+    .clk		(	clk		    ), .rst		(	reset		), .data_in	(	imm_to_iter_mem	), .data_out	(	imm_to_mem_stage    ) );
 
 pipeline #( .NUM_BITS	( 6	), .NUM_STAGES	( 1	), .EN_RESET   ( 0 ) ) buffer_wr_req_delay (
     .clk		(	clk		    ), .rst		(	reset		), .data_in	(	buffer_write_req	), .data_out	(	buffer_write_req_to_mem_stage    ) );
@@ -1034,7 +1039,7 @@ vector_memory #(
     .write_data         (	_vmem_wr_data2      )
 );
 
-assign imm_wr_data = immediate_to_mem_stage;
+assign imm_wr_data = imm_to_mem_stage;
 assign imm_wr_addr = dest_ns_index_id_to_mem_stage; //DEBUG buffers_wr_addr[IMM_ADDR_WIDTH-1:0];
 assign imm_wr_req = buffer_write_req_to_compute_stage[IMM_ISA_NS_INDEX];    
 
@@ -1386,34 +1391,6 @@ for(genvar i = 0 ; i< NUM_ELEM ; i=i+1) begin : SIMD
     assign buf_wr_addr_interleaved[i] = buf_wr_addr_q;
     assign buf_wr_req_interleaved[i] = buf_wr_req_q;
     
-    if (i==0) begin
-    compute_unit_test #(
-        .OPCODE_BITS(OPCODE_BITS),
-        .FUNCTION_BITS(FUNCTION_BITS),
-        .BASE_STRIDE_WIDTH(BASE_STRIDE_WIDTH),
-        .DATA_WIDTH(DATA_WIDTH)
-    ) compute_inst_test  (
-    .clk            (   clk       ),
-    .reset          (   reset     ),
-
-    .data_in0       (   src1_data[i]  ),
-    .data_in1       (   src2_data[i]  ),
-    
-    .acc_reset      (   acc_reset_local ),
-    .reduction_flag (   reduction_flag_local ),
-    .reduction_dim  (   reduction_dim_local   ),
-    
-    .dest_integer_bits  (   dest_integer_bits_to_compute_stage    ),
-    .src1_integer_bits  (   src1_integer_bits_to_compute_stage    ),
-    .src2_integer_bits  (   src2_integer_bits_to_compute_stage    ),
-
-    .data_out       (   data_compute_out[i]   ),
-
-    .opcode         (   opcode_q     ),
-    .fn             (   fn_q         )
-    );
-    end 
-    else begin 
     compute_unit #(
         .OPCODE_BITS(OPCODE_BITS),
         .FUNCTION_BITS(FUNCTION_BITS),
@@ -1439,7 +1416,6 @@ for(genvar i = 0 ; i< NUM_ELEM ; i=i+1) begin : SIMD
     .opcode         (   opcode_q     ),
     .fn             (   fn_q         )
     );
-    end
     
 end
 endgenerate

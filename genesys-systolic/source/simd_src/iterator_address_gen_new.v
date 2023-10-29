@@ -7,7 +7,8 @@ module iterator_address_gen_new #(
 	parameter FUNCTION_BITS 		=	4,
 	
 	parameter BASE_STRIDE_WIDTH     = 4*(NS_INDEX_ID_BITS + NS_ID_BITS),
-	parameter IMMEDIATE_WIDTH       =   32
+	parameter IMMEDIATE_WIDTH       =   16,
+    parameter DATA_WIDTH            =   32
 	
 )(
     input                               clk,
@@ -113,35 +114,34 @@ module iterator_address_gen_new #(
 	output [BASE_STRIDE_WIDTH-1 : 0]	base_plus_stride_out_5,
 
     //////////////////////////////////
-	output reg [IMMEDIATE_WIDTH-1:0]    immediate_out
+	output reg [IMMEDIATE_WIDTH-1:0]    immediate_out,
+    output reg [DATA_WIDTH-1:0]         imm_out
     );
     
     /******************************** write to memory *********************************/
     wire iterator_inst, base_config,stride_config;
     reg [BASE_STRIDE_WIDTH/2-1 : 0] low_data;
     wire [15 : 0] immediate;
-    reg [IMMEDIATE_WIDTH-1 : 0] immediate_reg;
-    wire [BASE_STRIDE_WIDTH-1 : 0] iterator_data_in;
-    
+    reg [DATA_WIDTH-1 : 0] imm_reg;
+    wire [BASE_STRIDE_WIDTH-1 : 0] iterator_data_in;    
     reg in_loop_d,in_loop_d2,in_loop_d3;
     reg was_in_nested_loop;
-    /*
-    always @(posedge) begin
-        
-    end
-    */
-    
+
+
     assign immediate = { src1_ns_id , src1_ns_index_id , src2_ns_id , src2_ns_index_id};
     
     always @(*) begin
         case(fn)
-            4'b1000: immediate_reg = {immediate_out[31:16],immediate};
-            4'b1001: immediate_reg = {immediate,immediate_out[15:0]};
-            default: immediate_reg = {{16{immediate[15]}},immediate[15:0]};
+            4'b1000: imm_reg = {imm_out[31:16],immediate};
+            4'b1001: imm_reg = {immediate,imm_out[15:0]};
+            default: imm_reg = {{16{immediate[15]}},immediate[15:0]};
         endcase
     end
-    always @(posedge clk)
-        immediate_out <= immediate_reg;
+
+    always @(posedge clk) begin
+        immediate_out <= immediate;
+        imm_out <= imm_reg;
+    end
     
     assign iterator_inst = (opcode == 4'b0110) && ~fn[3];
     
@@ -271,6 +271,8 @@ module iterator_address_gen_new #(
             read_addr_d2 <= read_addr_d;
         end
         
+       
+
         always @(posedge clk) begin
             iterator_read_req_out[gv] <= read_req;
             //iterator_read_addr_out[gv] <= read_addr;
@@ -284,25 +286,22 @@ module iterator_address_gen_new #(
 
 
     end
-    endgenerate
-
-    // read address base on operand
-        always @(posedge clk) begin
-            if (src1_ns_id >=0 && src1_ns_id < 6 && src1_valid) begin
+    endgenerate 
+   
+    always @(posedge clk) begin
+            if ((src1_ns_id < 6 || src1_ns_id >=0) && src1_valid) begin
                 iterator_read_addr_out_src0 <= src1_ns_index_id;
-            end 
-            
-            if (src2_ns_id >=0 && src2_ns_id < 6 && src2_valid) begin
-                iterator_read_addr_out_src1 <= src2_ns_index_id;
-            end 
-            
-            if (dest_ns_id >= 0 && dest_ns_id < 6  && dest_valid) begin
-                iterator_read_addr_out_dest <= dest_ns_index_id;
-            end 
-        end
+            end
 
+            if ((src2_ns_id <6 || src2_ns_id >= 0) && src2_valid) begin
+                iterator_read_addr_out_src1 <= src2_ns_index_id;
+            end
+
+            if ((dest_ns_id <6 || dest_ns_id >= 0) && dest_valid) begin
+                iterator_read_addr_out_dest <= dest_ns_index_id;
+            end
+        end
  
-    
     //////////////////////////////////////////
     assign	iterator_write_addr_base_out_0		=	iterator_write_addr_base_out[0];
     assign	iterator_data_in_base_out_0			=	iterator_data_in_base_out[0];

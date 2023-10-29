@@ -49,16 +49,16 @@ module calculus_unit#(
     );
     */
 
-    sqrt_fix sqrt_unit (
-        .ap_clk(clk),
-        .ap_rst(reset),
-        .ap_start(),
-        .ap_done(),
-        .ap_idle(),
-        .ap_ready(),
-        .in_r(data_in0),
-        .ap_return(sqrt_out)
-    );
+//    sqrt_fix sqrt_unit (
+//        .ap_clk(clk),
+//        .ap_rst(reset),
+//        .ap_start(),
+//        .ap_done(),
+//        .ap_idle(),
+//        .ap_ready(),
+//        .in_r(data_in0),
+//        .ap_return(sqrt_out)
+//    );
     
     always @(*) begin
         case(fn)

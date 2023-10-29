@@ -101,14 +101,23 @@ module performance_counters #(
     reg                         axi_req_en;
     reg                         axi_wdata_v;
      
+    reg 			counter ;
+    always @ (posedge clk) begin 
+	if (reset) begin
+	    counter <= 0 ;
+	end
+        else if (pc_state_d == IDLE && pc_state_q == PC_DONE) begin
+	    counter = counter + 1;
+	end
+    end
 
     always @ (posedge clk) begin
         if (reset)
             axi_st_addr <= 0;
         else
-            axi_st_addr <= axi_addr;
+            axi_st_addr <= axi_addr + (counter * 64'd384) ;
     end
-    assign axi_st_addr_v = pc_state_d == PC_WRITE_DDR_CONTROLLER && pc_state_q == PC_AXI_REQ;
+    assign axi_st_addr_v = pc_state_q == PC_WRITE_DDR_VMEM2 && pc_state_d == PC_AXI_REQ; 
 
     assign pc_controller = {pc_decode, pc_end2end, pc_sys_tot_compute, pc_simd_tot_compute, pc_num_tiles};
 
@@ -134,7 +143,8 @@ module performance_counters #(
     assign axi_st_size = 384; // 64 * 6 packets
     assign axi_st_data_v = axi_wdata_v;
 
-  always @(*)
+  
+    always @(*)
   begin
     pc_state_d = pc_state_q;
     axi_req_en = 0;
@@ -143,11 +153,6 @@ module performance_counters #(
     case(pc_state_q)
       IDLE: begin
         if (pc_start)
-            pc_state_d = PC_AXI_REQ;
-      end
-      PC_AXI_REQ: begin
-          axi_req_en = 1;
-          if (axi_awready)
             pc_state_d = PC_WRITE_DDR_CONTROLLER;
       end
       PC_WRITE_DDR_CONTROLLER: begin
@@ -155,46 +160,54 @@ module performance_counters #(
           // if wready is high, we change state and send next data
             axi_wdata_v = 1;
             axi_st_data = pc_controller;
-          if (axi_wready) begin
+         // if (axi_wready) begin
             pc_state_d = PC_WRITE_DDR_IBUF;
-          end
+//            pc_state_d = PC_DONE_WAIT;
+         // end
       end
       PC_WRITE_DDR_IBUF: begin
             axi_wdata_v = 1;
             axi_st_data = pc_ibuf;
-          if (axi_wready) begin
-            pc_state_d = PC_WRITE_DDR_OBUF;
-          end
+        //  if (axi_wready) begin
+//            pc_state_d = PC_WRITE_DDR_OBUF;
+            pc_state_d = PC_WRITE_DDR_OBUF ;
+        //  end
       end
       PC_WRITE_DDR_OBUF: begin
             axi_wdata_v = 1;
             axi_st_data = pc_obuf;
-          if (axi_wready) begin
-            pc_state_d = PC_WRITE_DDR_PARAMBUF;
-          end
+       //   if (axi_wready) begin
+           pc_state_d = PC_WRITE_DDR_PARAMBUF;
+      //    end
       end
       PC_WRITE_DDR_PARAMBUF: begin
             axi_wdata_v = 1;
             axi_st_data = pc_parambuf;
-          if (axi_wready) begin
+      //    if (axi_wready) begin
 //            pc_state_d = PC_WRITE_DDR_VMEM1;
             pc_state_d = PC_WRITE_DDR_VMEM1;
-          end
+      //    end
       end
       PC_WRITE_DDR_VMEM1: begin
             axi_wdata_v = 1;
             axi_st_data = pc_vmem1;
-          if (axi_wready) begin
+       //   if (axi_wready) begin
             pc_state_d = PC_WRITE_DDR_VMEM2;
-          end
+      //    end
       end
       PC_WRITE_DDR_VMEM2: begin
             axi_wdata_v = 1;
             axi_st_data = pc_vmem2;
-           if (axi_wready) begin
-            pc_state_d = PC_DONE_WAIT;
-          end
+       //    if (axi_wready) begin
+            pc_state_d = PC_AXI_REQ;
+       //   end
       end
+      PC_AXI_REQ: begin
+          axi_req_en = 1;
+          if (axi_awready )
+            pc_state_d = PC_DONE_WAIT;
+      end
+
       PC_DONE_WAIT: begin
         if (imem_bvalid)
             pc_state_d = PC_DONE;
@@ -204,7 +217,7 @@ module performance_counters #(
       end
     endcase
   end
-
+  
   always @(posedge clk)
   begin
     if (reset)

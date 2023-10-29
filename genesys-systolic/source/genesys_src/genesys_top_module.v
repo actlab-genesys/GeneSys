@@ -306,7 +306,7 @@ module genesys_top_module #(
     
     localparam integer  BBUF_NUM_BANKS               = ARRAY_M;
 //    localparam integer  BBUF_WRITE_WIDTH             = PARAMBUF_AXI_DATA_WIDTH/BBUF_NUM_BANKS;
-    localparam integer  BBUF_WRITE_WIDTH             = (PARAMBUF_AXI_DATA_WIDTH > (BBUF_NUM_BANKS*BIAS_WIDTH)) ? (PARAMBUF_AXI_DATA_WIDTH/(BBUF_NUM_BANKS*BIAS_WIDTH)) : BIAS_WIDTH;
+    localparam integer  BBUF_WRITE_WIDTH             = (PARAMBUF_AXI_DATA_WIDTH > (BBUF_NUM_BANKS*BIAS_WIDTH)) ? (PARAMBUF_AXI_DATA_WIDTH/(BBUF_NUM_BANKS)) : BIAS_WIDTH;
 
     localparam integer  BBUF_MEMORY_SIZE             = BBUF_BANK_DEPTH * BBUF_WRITE_WIDTH;
     localparam integer  BBUF_WRITE_ADDR_WIDTH        = $clog2(BBUF_MEMORY_SIZE/BBUF_WRITE_WIDTH);
@@ -497,6 +497,7 @@ module genesys_top_module #(
     wire                                        simd_start;
     wire                                        obuf_simd_start;
     wire                                        simd_start_decode ;
+    wire                                        simd_reset ;
 
     wire                                        sync_tag_req;
 
@@ -583,6 +584,7 @@ module genesys_top_module #(
     // Compute Base ADDR
 
     wire sa_compute_req_q, sa_compute_req_pulse;
+    wire ignore_bias ;
     register_sync #(1) tag_req_reg1 (clk, reset, sa_compute_req, sa_compute_req_q);
     assign sa_compute_req_pulse = sa_compute_req && ~sa_compute_req_q;
 
@@ -597,7 +599,7 @@ module genesys_top_module #(
     assign wbuf_compute_base_addr_v = sa_compute_req_pulse;
 
     //assign wbuf_tag_done = parambuf_tag_done;
-    assign bias_tag_done = bbuf_tag_done;
+    assign bias_tag_done = ignore_bias?1:bbuf_tag_done;
     assign wbuf_compute_ready = parambuf_compute_ready;
     assign bbuf_compute_ready = parambuf_compute_ready;
 
@@ -763,8 +765,9 @@ module genesys_top_module #(
         .pc_wvalid                  ( pc_wvalid                 ),
         .pc_done                    ( pc_done                   ),
         .axi_wr_done                ( pc_axi_wr_done            ),
-        .physical_pc_base_addr      ( pc_write_addr             )
-      //  .software_reset           (reset)
+        .physical_pc_base_addr      ( pc_write_addr             ),
+	    .ignore_bias                ( ignore_bias               ),
+        .simd_reset                 ( simd_reset                )
     );
 
 
@@ -1010,7 +1013,8 @@ module genesys_top_module #(
         .pc_bbuf_num_tiles          (pc_bbuf_num_tiles_w             ),
         .pc_bbuf_tot_cycles         (pc_bbuf_tot_cycles_w            ),
         .pc_bbuf_tot_requests       (pc_bbuf_tot_requests_w          ),
-        .pc_bbuf_size_per_requests  (pc_bbuf_size_per_requests_w     )
+        .pc_bbuf_size_per_requests  (pc_bbuf_size_per_requests_w     ),
+	.ignore_bias                (ignore_bias                     )
     );
 
 //=============================================================
@@ -1447,6 +1451,7 @@ end
    .IMEM_ADDR_WIDTH	(	SIMD_IMEM_ADDR_WIDTH   ),
    .NUM_ELEM		(	ARRAY_M           ),	
    .DATA_WIDTH		(   ACC_WIDTH	      ),
+   .C_M_AXI_DATA_WIDTH (OBUF_AXI_DATA_WIDTH),
    .VMEM_ADDR_WIDTH	(	VMEM_ADDR_WIDTH   ),
    .IMM_ADDR_WIDTH	(	IMM_ADDR_WIDTH    ),
    .OBUF_ADDR_WIDTH (  OBUF_ADDR_WIDTH    ),
@@ -1456,7 +1461,7 @@ end
     )simd_inst (
     
     .clk			   (	clk	    ),
-    .reset             (	reset	),
+    .reset             (	simd_reset	),
     
     .start             (    simd_start   ),
     .in_fusion         (fused_sa_simd),

@@ -25,7 +25,7 @@ module instruction_memory_wrapper #(
     input  wire                                         clk,
     input  wire                                         reset,
     input  wire 										start,
-	
+	input  wire                                         genesys_done, // DEBUG	
     input  wire                                         imem_rd_req,
     input  wire  [ INST_ADDR_WIDTH      -1 : 0 ]        imem_rd_addr,
 	input  wire											imem_rd_block_done,
@@ -112,7 +112,7 @@ module instruction_memory_wrapper #(
     
     wire slave_ld_req,decoder_ld_req;
     reg  slave_ld_req_in_d,decoder_ld_req_in_d;
-    wire imem_wr_start,axi_rd_req_final;
+    wire imem_wr_start,imem_wr_req, axi_rd_req_final;
     
     wire imem_wr_done;
     
@@ -120,6 +120,8 @@ module instruction_memory_wrapper #(
     wire imem_wr_data_valid;
 	wire [ NUM_INST_IN*INST_DATA_WIDTH-1 : 0 ]		imem_wr_data;
     wire                                            axi_rd_ready;  
+    
+  
 //==============================================================================
 
 //==============================================================================
@@ -139,10 +141,12 @@ always @(posedge clk)
     if(reset) begin
         slave_ld_req_in_d <= 1'b0;
         decoder_ld_req_in_d <= 1'b0;
+        
     end
     else begin
         slave_ld_req_in_d <= slave_ld_req_in;
         decoder_ld_req_in_d <= decoder_ld_req_in;
+        
     end
         
 assign slave_ld_req = slave_ld_req_in  ^ slave_ld_req_in_d;
@@ -164,31 +168,32 @@ always @(posedge clk) begin
         axi_rd_req_size <= decoder_ld_req_size;
         axi_rd_req <= 1'b1;
     end
-    else if( axi_rd_req_final ) begin
+    else if( axi_rd_req_final_q ) begin
         axi_rd_req <= 1'b0;
     end
 end
 
-reg axi_rd_req_q;
+reg axi_rd_req_q, axi_rd_req_final_q;
 
 always @(posedge clk)
     if(reset) begin
         axi_rd_req_q <= 1'b0;
+        axi_rd_req_final_q <= 1'b0 ;
     end
     else begin
         axi_rd_req_q <= axi_rd_req;
+        axi_rd_req_final_q <= axi_rd_req_final ;
     end
 
 
 // Rohan: to make axi_rd_req go high for one cycle. Else, AXI was sending multiple instrcutions and reading same value multiple times
-assign axi_rd_req_final =  (axi_rd_req & ~axi_rd_req_q) & imem_wr_start;
+assign axi_rd_req_final =  (axi_rd_req & ~axi_rd_req_q) & imem_wr_req;
 
 assign imem_wr_done = axi_rd_done;
 assign imem_wr_data_valid = mem_write_req;
 assign imem_wr_data = mem_write_data;
 
-instruction_memory
-#(
+instruction_memory #(
     .INST_DATA_WIDTH   (	INST_DATA_WIDTH ),
     .INST_ADDR_WIDTH   (	INST_ADDR_WIDTH ),
     .NUM_INST_IN       (    NUM_INST_IN     )
@@ -198,6 +203,7 @@ instruction_memory
 	.reset                  (	reset				),
 
 	.start                  (	start				),
+    .genesys_done           (   genesys_done        ),
 
 	.imem_rd_req            (	imem_rd_req			),
 	.imem_rd_addr           (	imem_rd_addr		),
@@ -208,6 +214,7 @@ instruction_memory
 	.imem_rd_valid          (	imem_rd_valid		),
 
 	.imem_wr_start          (	imem_wr_start		),
+	.imem_wr_req            (   imem_wr_req         ),
 	.imem_wr_done           (	imem_wr_done		),
 
 	.imem_wr_data_valid     (	imem_wr_data_valid	),

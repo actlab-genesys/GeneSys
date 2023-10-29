@@ -211,8 +211,10 @@ module controller #(
     input wire  [ADDR_WIDTH    -1 : 0 ]                  pc_awsize,
     input wire                                           pc_wvalid,     
     input wire                                           pc_done,
-    input wire  [ADDR_WIDTH    -1 : 0 ]                  physical_pc_base_addr,
-    output wire                                          axi_wr_done    
+    output reg  [ADDR_WIDTH    -1 : 0 ]                  physical_pc_base_addr,
+    output wire                                          axi_wr_done,
+    output wire                                          ignore_bias,
+    output wire                                          simd_reset   
     
   );
 
@@ -296,6 +298,7 @@ module controller #(
     wire  [ 2                       : 0 ]		_cfg_set_specific_loop_loop_param;
     wire                                        imem_ld_req_valid;
     wire [ IMM_WIDTH            -1 : 0 ]        imem_ld_req_size;
+    wire [ ADDR_WIDTH           -1 : 0 ]        imem_ld_req_addr;
     wire [ ADDR_WIDTH           -1 : 0 ]        ibuf_base_addr;
     wire [ ADDR_WIDTH           -1 : 0 ]        wbuf_base_addr;
     wire [ ADDR_WIDTH           -1 : 0 ]        obuf_base_addr;
@@ -461,7 +464,7 @@ module controller #(
       TM_WAIT: begin
           if (genesys_state == BLOCK_DONE)
              tm_state_d = TM_FLUSH;
-          else if (tag_ready && genesys_state_qq != SA_DONE_WAIT && genesys_state_qq != SIMD_DONE_WAIT )
+          else if (tag_ready && genesys_state_qq != SA_DONE_WAIT && genesys_state_qq != SIMD_DONE_WAIT && genesys_state_qq != PERFORMANCE_COUNT )
              tm_state_d = TM_READY_NEXT_REQUEST;            
       end
       TM_READY_NEXT_REQUEST : begin
@@ -560,8 +563,8 @@ module controller #(
         end 
       end    
       DECODE: begin   
-      //  if (_base_loop_ctrl_start) begin      // rohan changed as state machine was struck earlier
-        if (last_block) begin
+        if (_base_loop_ctrl_start) begin      // rohan changed as state machine was struck earlier
+//        if (last_block) begin
            if (sa_group_v) 
               genesys_state_d = SA;
            else if (simd_group_v)
@@ -577,7 +580,7 @@ module controller #(
              if (sa_simd_group_v)
                  genesys_state_d = SIMD_DONE_WAIT;
              else
-                 genesys_state_d = BLOCK_DONE;
+                 genesys_state_d = PERFORMANCE_COUNT;
       end
       SIMD: begin
          if (simd_group_done)
@@ -586,18 +589,18 @@ module controller #(
       SIMD_DONE_WAIT: begin
          if (sa_simd_group_v) begin
             if (simd_group_done_q)
-                genesys_state_d = BLOCK_DONE; 
+                genesys_state_d = PERFORMANCE_COUNT; 
          end
          else begin
             if (simd_tiles_done)
-                genesys_state_d = BLOCK_DONE;
+                genesys_state_d = PERFORMANCE_COUNT;
             else
                 genesys_state_d = SIMD;
          end
       end
        PERFORMANCE_COUNT: begin
          if (pc_done) 
-             genesys_state_d = BLOCK_DONE;
+             genesys_state_d = BLOCK_DONE;          
       end
       BLOCK_DONE: begin
          if (~last_block) 
@@ -610,6 +613,22 @@ module controller #(
       end
   endcase
   end
+  
+    reg simd_reset_q;
+    always @(posedge clk) begin
+        if (reset)
+            simd_reset_q <= 1 ;
+        else if (genesys_state_d == IDLE) 
+            simd_reset_q <= 0;
+        else if (genesys_state_d == DECODE)
+            simd_reset_q <= 0;
+        else if (genesys_state_d ==PERFORMANCE_COUNT ) 
+            simd_reset_q <= 0;
+        else if (genesys_state_d == BLOCK_DONE || genesys_state_d == DONE)
+            simd_reset_q <= 1;
+    end
+        
+    assign simd_reset = simd_reset_q ;
       
      
     assign block_done = genesys_state == BLOCK_DONE;
@@ -630,8 +649,7 @@ module controller #(
     end
     
     assign simd_start_decode_d  = simd_start_decode ;
-    assign pc_start = genesys_state_d == PERFORMANCE_COUNT && (genesys_state_q == SA_DONE_WAIT || genesys_state_q == SIMD_DONE_WAIT);
-
+    assign pc_start = genesys_state_d == PERFORMANCE_COUNT && (genesys_state_q != PERFORMANCE_COUNT);
 
 register_sync #(1) simd_group_done_reg (clk, reset, simd_group_done,simd_group_done_q);
 
@@ -677,19 +695,18 @@ register_sync #(1) simd_group_done_reg (clk, reset, simd_group_done,simd_group_d
   .probe19(0)
   );
   */
-/*
+
 // ILA monitoring combinatorial adder
-	ila_0 i_ila_0 (
-		.clk(ap_clk),              // input wire        clk
-		.probe0(sa_compute_req),           // input wire [0:0]  probe0  
-		.probe1(genesys_done), // input wire [0:0]  probe1 
-		.probe2(ibuf_compute_ready),   // input wire [0:0]  probe2 
-		.probe3(num_sa_compute_req),    // input wire [63:0] probe3 
-		.probe4(wbuf_compute_ready),     // input wire [0:0]  probe4 
-		.probe5(obuf_compute_ready),   // input wire [0:0]  probe5 
-		.probe6(genesys_state_q)       // input wire [31:0] probe6
-	);
-*/
+	// ila_1 i_ila_0 (
+	// 	.clk(ap_clk),              // input wire        clk
+	// 	.probe0(genesys_state_q)   // input wire [0:0]  probe0  _base_loop_ctrl_start
+	// 	//.probe1(chip_start),     // input wire [0:0]  probe1 
+	// 	//.probe2(genesys_state_q)   // input wire [0:0]  probe2 
+	// 	// .probe3(num_sa_compute_req),    // input wire [63:0] probe3 
+	// 	// .probe4(wbuf_compute_ready),     // input wire [0:0]  probe4 
+	// 	// .probe5(obuf_compute_ready),   // input wire [0:0]  probe5 
+	// 	// .probe6(genesys_state_q)       // input wire [31:0] probe6
+	// );
   
 //=============================================================
   // GROUPs and Sequence Configuration
@@ -703,7 +720,7 @@ register_sync #(1) simd_group_done_reg (clk, reset, simd_group_done,simd_group_d
   assign _simd_group_v = (inst_group_type == SIMD_GROUP && inst_group_s_e == GROUP_START && inst_group_v);
   
   always @ (posedge clk) begin
-    if (reset) begin
+    if (reset || genesys_state_d == IDLE || genesys_state_d == BLOCK_DONE) begin
        sa_group_v <= 1'b0;
        simd_group_v <= 1'b0;
        sa_group_id <= 0;
@@ -745,12 +762,14 @@ register_sync #(1) simd_group_done_reg (clk, reset, simd_group_done,simd_group_d
     assign start_bit_d = ap_start;
     assign chip_start = (start_bit_q ^ start_bit_d) && genesys_state_q == IDLE;
     
-    assign imem_slave_ld_addr = axi00_imem_ptr0;
+    assign imem_slave_ld_addr = axi00_imem_ptr0 + slv_reg5_out;
     assign imem_slave_ld_req_size = slv_reg2_out;
     
     assign imem_start = chip_start;
     
     assign imem_slave_ld_req_in = (genesys_state == GET_FIRST_INST_BLOCK) && (genesys_state_qq != GET_FIRST_INST_BLOCK);
+    
+    assign imem_ld_req_addr = axi00_imem_ptr0 + imem_base_addr ;
     
     always @(posedge clk) begin
        if (reset) begin
@@ -977,7 +996,7 @@ inst_control_s_axi (
     .slave_ld_addr                  ( imem_slave_ld_addr             ),
     .slave_ld_req_size              ( imem_slave_ld_req_size         ),
     .slave_ld_req_in                ( imem_slave_ld_req_in           ),
-    .decoder_ld_addr                ( imem_base_addr                 ),
+    .decoder_ld_addr                ( imem_ld_req_addr               ),
     .decoder_ld_req_size            ( imem_ld_req_size               ),
     .decoder_ld_req_in              ( imem_ld_req_valid              ),
     .pc_waddr                       ( pc_waddr                       ),
@@ -1049,19 +1068,22 @@ inst_control_s_axi (
     .inst_group_v                   ( inst_group_v                   ),
     .inst_group_last                ( inst_group_last                ),
     .cfg_simd_inst                  ( cfg_simd_inst                  ),
-    .cfg_simd_inst_v                ( cfg_simd_inst_v                )
+    .cfg_simd_inst_v                ( cfg_simd_inst_v                ),
+    .ignore_bias                    ( ignore_bias                    )
   );
 //=============================================================
 
 
  // Sort of Virtual to Physical memory conversion by adding fixed offset at runtime.
- 
+ wire [ADDR_WIDTH-1:0] physical_pc_base_addr_d ;
  assign physical_ibuf_base_addr = ibuf_base_addr + axi00_imem_ptr0;
  assign physical_wbuf_base_addr = wbuf_base_addr + axi00_imem_ptr0;
  assign physical_bbuf_base_addr = bbuf_base_addr + axi00_imem_ptr0;
  assign physical_obuf_base_addr = obuf_base_addr + axi03_obuf_ptr0;
 // assign physical_pc_base_addr   = obuf_base_addr + axi03_obuf_ptr0 + slv_reg4_out;
-assign physical_pc_base_addr   = axi04_simd_ptr0 + slv_reg4_out; 
+ assign physical_pc_base_addr_d   =  64'd0 + axi00_imem_ptr0; 
+ always @(posedge clk)  // Strange Vivado bug during impl opt. 
+	 physical_pc_base_addr <= physical_pc_base_addr_d ;
 
  assign _cfg_set_specific_loop_v = cfg_set_specific_loop_v;
  assign _cfg_set_specific_loop_loop_id = cfg_set_specific_loop_loop_id;

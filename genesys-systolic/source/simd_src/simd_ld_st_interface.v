@@ -427,7 +427,7 @@ output wire [PC_DATA_WIDTH - 1 : 0]                 pc_simd_st_size_per_requests
   assign st_cfg_tile_loop_iter_v = (opcode == 4'b0101) && (fn == ST_CONFIG_TILE_LOOP_ITER) && (~curr_group_st_config_done);
   assign st_cfg_tile_loop_stride_v = (opcode == 4'b0101) && (fn == ST_CONFIG_TILE_LOOP_STRIDE)  && (~curr_group_st_config_done); 
   
-  assign st_start = fn == ST_START;    
+  assign st_start = (fn == ST_START) && (opcode == 4'b0101);    
 
   assign cfg_group_id = ld_st_group_id;
   
@@ -1035,7 +1035,7 @@ output wire [PC_DATA_WIDTH - 1 : 0]                 pc_simd_st_size_per_requests
 
     assign st_cfg_base_loop_iter_vmem2_v = st_cfg_base_loop_iter_v && cfg_ns_id == NS_VMEM_2;
 
-    controller_fsm_group_simd_debug #(
+    controller_fsm_group_simd #(
       .LOOP_ID_W                    ( LOOP_ID_W ),
       .GROUP_ID_W                   ( GROUP_ID_W ),
       .LOOP_ITER_W                  ( LOOP_ITER_W )

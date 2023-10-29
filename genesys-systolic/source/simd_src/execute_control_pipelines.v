@@ -5,6 +5,7 @@ module execute_control_pipelines #(
 	parameter FUNCTION_BITS 		=	4,
     parameter NS_ID_BITS 			=	3,
 	parameter NS_INDEX_ID_BITS 		=	5,
+    parameter PIPE_STAGE_WIDTH      =   6,
     parameter BASE_STRIDE_WIDTH     =   4*(NS_INDEX_ID_BITS + NS_ID_BITS)
 ) (
     input                               clk,
@@ -19,42 +20,72 @@ module execute_control_pipelines #(
     output reg [5:0]                        buf_wr_req_out,
     output reg [BASE_STRIDE_WIDTH-1:0]      buf_wr_addr_out
 );
-    reg [4:0] pipe_stages; 
-    // wire [BASE_STRIDE_WIDTH + NS_INDEX_ID_BITS: 0] pipe_in1,pipe_in2, pipe_in3, pipe_in4, pipe_in6, pipe_in12;
-    // wire [BASE_STRIDE_WIDTH + NS_INDEX_ID_BITS: 0] pipe_out1, pipe_out2, pipe_out3, pipe_out4, pipe_out6, pipe_out12;
+    reg [PIPE_STAGE_WIDTH-1:0] pipe_stages; 
     
-    // wire [5:0]                       buf_wr_req_out1, buf_wr_req_out2, buf_wr_req_out3, buf_wr_req_out4, buf_wr_req_out6, buf_wr_req_out12;
-    // wire [BASE_STRIDE_WIDTH-1:0]     buf_wr_addr_out1, buf_wr_addr_out2, buf_wr_addr_out3, buf_wr_addr_out4, buf_wr_addr_out6, buf_wr_addr_out12;
-    // wire [OPCODE_BITS-1:0]           opcode_out1, opcode_out2, opcode_out3, opcode_out4, opcode_out6, opcode_out12;
-    // wire [FUNCTION_BITS-1:0]         fn_out1, fn_out2, fn_out3, fn_out4, fn_out6, fn_out12;
-    
-    wire [5:0]                       buf_wr_req_out8;
-    wire [BASE_STRIDE_WIDTH-1:0]     buf_wr_addr_out8;
-    wire [BASE_STRIDE_WIDTH + NS_INDEX_ID_BITS: 0] pipe_in8, pipe_out8;
-    wire [OPCODE_BITS-1:0] opcode_out8;
-    wire [FUNCTION_BITS-1:0] fn_out8;
+    // wire [5:0]                       buf_wr_req_out8;
+    // wire [BASE_STRIDE_WIDTH-1:0]     buf_wr_addr_out8;
+    // wire [BASE_STRIDE_WIDTH + NS_INDEX_ID_BITS: 0] pipe_in8, pipe_out8;
+
+    // wire [5:0]                       buf_wr_req_out_div; // ------------------- 51 cycle delay ---------------------------// 
+    // wire [BASE_STRIDE_WIDTH-1:0]     buf_wr_addr_out_div;
+    // wire [BASE_STRIDE_WIDTH + NS_INDEX_ID_BITS: 0] pipe_in_div, pipe_out_div;
 
     reg   [OPCODE_BITS+FUNCTION_BITS-1:0] prev_inst;
     wire  [OPCODE_BITS+FUNCTION_BITS-1:0] cur_inst;
     assign cur_inst = {opcode, fn};
     
-    reg  in_loop;
     wire out_valid;
-    reg [4:0] stage_count; 
-    assign out_valid = (cur_inst == 8'b00001111) ? (in_loop || (stage_count == pipe_stages)) : 1'b1;
+    reg [PIPE_STAGE_WIDTH-1:0] stage_count; 
+    
+    assign out_valid = (state_q == IN_LOOP || state_q == POST_LOOP);
 
-    always @(posedge clk) begin
-        if (reset) begin
-            in_loop <= 1'b0;
-        end else if (in_loop_in) begin
-            in_loop <= 1'b1;
-        end else if (in_loop && stage_count == (pipe_stages)) begin
-            in_loop <= 1'b0;
+    localparam integer  IDLE            = 0;
+	localparam integer  IN_LOOP         = 1;
+	localparam integer  POST_LOOP       = 2;
+    reg [1:0] state_q, state_d;
+    
+    always @(*) begin
+		case (state_q)
+		IDLE: begin
+			if (in_loop_in) begin
+				state_d = IN_LOOP;
+		    end else begin
+		        state_d = state_q;
+		    end
+		end 
+
+        IN_LOOP: begin
+			if (!in_loop_in) begin
+				state_d = POST_LOOP;
+            end else begin
+		        state_d = state_q;
+		    end
         end
+
+        POST_LOOP: begin
+			if (stage_count >= pipe_stages) begin
+				state_d = IDLE;
+            end else begin
+		        state_d = state_q;
+		    end
+        end
+        
+        default: begin
+			state_d = IDLE;
+		end
+		endcase
     end
 
+    always @(posedge clk ) begin
+	   if (reset) begin
+            state_q <= IDLE;
+	   end else begin
+            state_q <= state_d;
+	   end
+	end
+    
     always @(posedge clk) begin
-        if (cur_inst == 8'b00001111) begin
+        if (state_q == POST_LOOP) begin
             stage_count <= stage_count + 1;
         end else begin
             stage_count <= 0;
@@ -62,7 +93,7 @@ module execute_control_pipelines #(
     end
 
     always @(*) begin
-        if (cur_inst == 8'b00001111) begin
+        if (state_q == POST_LOOP) begin
             opcode_out = prev_inst[OPCODE_BITS+FUNCTION_BITS-1:FUNCTION_BITS];
             fn_out     = prev_inst[FUNCTION_BITS-1:0];
         end else begin
@@ -72,7 +103,7 @@ module execute_control_pipelines #(
     end
 
     always @(posedge clk) begin
-        if (cur_inst == 8'b00001111) begin
+        if (state_q == POST_LOOP) begin
             prev_inst <= prev_inst;
         end else begin
             prev_inst <= cur_inst;
@@ -87,7 +118,7 @@ module execute_control_pipelines #(
                     4'b0000, 4'b0001,4'b0010,4'b0011,4'b0101,4'b0110 : begin
                         pipe_stages = 0;
                     end
-                    //4'b0100 : pipe_stages = 6;  // Div is not implemented
+                    // 4'b0100 : pipe_stages = 51;  // Div is not implemented
                     default : pipe_stages = 0;     
                 endcase
             end
@@ -106,9 +137,9 @@ module execute_control_pipelines #(
                         pipe_stages = 6;
                     end
                     */
-                    4'b1000: begin
-                        pipe_stages = 8;
-                    end
+                    // 4'b1000: begin
+                    //     pipe_stages = 8;
+                    // end
                     default : pipe_stages = 0;     
                 endcase
             end
@@ -122,133 +153,46 @@ module execute_control_pipelines #(
         endcase
     end
 
-    assign pipe_in8 = {buf_wr_req_in, buf_wr_addr_in};
-    pipeline #( 
-        .NUM_BITS	( BASE_STRIDE_WIDTH + NS_INDEX_ID_BITS + 1 ), 
-        .NUM_STAGES	( 8	), 
-        .EN_RESET   ( 0 )
-    ) i_1regs (
-        .clk		(	clk		    ), 
-        .rst		(	reset		), 
-        .data_in	(	pipe_in8	), 
-        .data_out	(	pipe_out8    ) 
-    );
+    // assign pipe_in8 = {buf_wr_req_in, buf_wr_addr_in};
+    // pipeline #( 
+    //     .NUM_BITS	( BASE_STRIDE_WIDTH + NS_INDEX_ID_BITS + 1 ), 
+    //     .NUM_STAGES	( 8	), 
+    //     .EN_RESET   ( 0 )
+    // ) reg_8 (
+    //     .clk		(	clk		    ), 
+    //     .rst		(	reset		), 
+    //     .data_in	(	pipe_in8	), 
+    //     .data_out	(	pipe_out8    ) 
+    // );
 
-    assign {buf_wr_req_out8, buf_wr_addr_out8} = pipe_out8;
+    // assign {buf_wr_req_out_div, buf_wr_addr_out_div} = pipe_out_div;
 
-    /*
-    pipeline #( 
-        .NUM_BITS	( BASE_STRIDE_WIDTH + NS_INDEX_ID_BITS + 1 ), 
-        .NUM_STAGES	( 1	), 
-        .EN_RESET   ( 0 ) ) 
-    i_1regs (
-        .clk		(	clk		    ), 
-        .rst		(	reset		), 
-        .data_in	(	pipe_in1	), 
-        .data_out	(	pipe_out1    ) );
+    // assign pipe_in_div = {buf_wr_req_in, buf_wr_addr_in};
+    // pipeline #( 
+    //     .NUM_BITS	( BASE_STRIDE_WIDTH + NS_INDEX_ID_BITS + 1 ), 
+    //     .NUM_STAGES	( 51 ), 
+    //     .EN_RESET   ( 0 )
+    // ) reg_51 (
+    //     .clk		(	clk		    ), 
+    //     .rst		(	reset		), 
+    //     .data_in	(	pipe_in_div	), 
+    //     .data_out	(	pipe_out_div    ) 
+    // );
 
-    assign pipe_in2 = pipe_out1;
-    assign {buf_wr_req_out1, buf_wr_addr_out1} = pipe_out1;
-
-    pipeline #( 
-        .NUM_BITS	( BASE_STRIDE_WIDTH + NS_INDEX_ID_BITS + 1 ), 
-        .NUM_STAGES	( 1	), 
-        .EN_RESET   ( 0 ) ) 
-    i_2regs (
-        .clk		(	clk		    ), 
-        .rst		(	reset		), 
-        .data_in	(	pipe_in2 	), 
-        .data_out	(	pipe_out2    ) );
-    
-    assign pipe_in3 = pipe_out2;
-    assign {buf_wr_req_out2, buf_wr_addr_out2} = pipe_out2;
-
-    pipeline #( 
-        .NUM_BITS	( BASE_STRIDE_WIDTH + NS_INDEX_ID_BITS + 1 ), 
-        .NUM_STAGES	( 1	), 
-        .EN_RESET   ( 0 ) ) 
-    i_3regs (
-        .clk		(	clk		    ), 
-        .rst		(	reset		), 
-        .data_in	(	pipe_in3 	), 
-        .data_out	(	pipe_out3    ) );
-
-    assign pipe_in6 = pipe_out3;
-    assign {buf_wr_req_out3, buf_wr_addr_out3} = pipe_out3;
-
-    pipeline #( 
-        .NUM_BITS	( BASE_STRIDE_WIDTH + NS_INDEX_ID_BITS + 1 ), 
-        .NUM_STAGES	( 1	), 
-        .EN_RESET   ( 0 ) ) 
-    i_4regs (
-        .clk		(	clk		    ), 
-        .rst		(	reset		), 
-        .data_in	(	pipe_in4 	), 
-        .data_out	(	pipe_out4    ) );
-
-    assign pipe_in4 = pipe_out3;
-    assign {buf_wr_req_out4, buf_wr_addr_out4} = pipe_out4;
-
-    pipeline #( 
-        .NUM_BITS	( BASE_STRIDE_WIDTH + NS_INDEX_ID_BITS + 1 ), 
-        .NUM_STAGES	( 3	), 
-        .EN_RESET   ( 0 ) ) 
-    i_6regs (
-        .clk		(	clk		    ), 
-        .rst		(	reset		), 
-        .data_in	(	pipe_in6 	), 
-        .data_out	(	pipe_out6    ) );
-    
-    assign pipe_in12 = pipe_out6;
-    assign {buf_wr_req_out6, buf_wr_addr_out6} = pipe_out6;
-
-    pipeline #( 
-        .NUM_BITS	( BASE_STRIDE_WIDTH + NS_INDEX_ID_BITS + 1 ), 
-        .NUM_STAGES	( 6	), 
-        .EN_RESET   ( 0 ) ) 
-    i_12regs (
-        .clk		(	clk		    ), 
-        .rst		(	reset		), 
-        .data_in	(	pipe_in12 	), 
-        .data_out	(	pipe_out12    ) );
-    
-    assign {buf_wr_req_out12, buf_wr_addr_out12} = pipe_out12;
-    */
+    // assign {buf_wr_req_out_div, buf_wr_addr_out_div} = pipe_out_div;
 
     always @(*) begin
         if (out_valid) begin
             case (pipe_stages)
-                /*
-                5'b00001: begin
-                    buf_wr_req_out    =   buf_wr_req_out1;
-                    buf_wr_addr_out   =   buf_wr_addr_out1;
-                end
-                5'b00010: begin
-                    buf_wr_req_out    =   buf_wr_req_out2;
-                    buf_wr_addr_out   =   buf_wr_addr_out2;
-                end
-                5'b00011: begin
-                    buf_wr_req_out    =   buf_wr_req_out3;
-                    buf_wr_addr_out   =   buf_wr_addr_out3;
-                end
-                5'b00100: begin
-                    buf_wr_req_out    =   buf_wr_req_out4;
-                    buf_wr_addr_out   =   buf_wr_addr_out4;
-                end
-                5'b00110: begin
-                    buf_wr_req_out    =   buf_wr_req_out6;
-                    buf_wr_addr_out   =   buf_wr_addr_out6;
-                end
-                5'b01100: begin
-                    buf_wr_req_out    =   buf_wr_req_out12;
-                    buf_wr_addr_out   =   buf_wr_addr_out12;
-                end
-                */
-
-                5'b01000: begin
-                    buf_wr_req_out    =   buf_wr_req_out8;
-                    buf_wr_addr_out   =   buf_wr_addr_out8;
-                end
+                // 6'b110011: begin
+                //     buf_wr_req_out    =   buf_wr_req_out_div;
+                //     buf_wr_addr_out   =   buf_wr_addr_out_div;
+                // end
+            
+                // 6'b001000: begin
+                //     buf_wr_req_out    =   buf_wr_req_out8;
+                //     buf_wr_addr_out   =   buf_wr_addr_out8;
+                // end
                 
                 default: begin
                     buf_wr_req_out    =   buf_wr_req_in;

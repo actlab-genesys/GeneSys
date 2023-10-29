@@ -200,7 +200,8 @@ module parambuf_interface #(
     output wire [PC_DATA_WIDTH - 1 : 0]                 pc_bbuf_num_tiles,
     output wire [PC_DATA_WIDTH - 1 : 0]                 pc_bbuf_tot_cycles,  
     output wire [PC_DATA_WIDTH - 1 : 0]                 pc_bbuf_tot_requests,
-    output wire [PC_DATA_WIDTH - 1 : 0]                 pc_bbuf_size_per_requests
+    output wire [PC_DATA_WIDTH - 1 : 0]                 pc_bbuf_size_per_requests,
+    output wire                                         ignore_bias
 
   );
 
@@ -793,7 +794,7 @@ module parambuf_interface #(
     end
 //    if (bbuf_tag_req && bbuf_tag_ready) begin
     if (bbuf_base_addr_v) begin
-      bbuf_tag_ld_addr[_bbuf_tag_alloc] <= tag_base_bbuf_ld_addr;
+      bbuf_tag_ld_addr[bbuf_tag] <= tag_base_bbuf_ld_addr;
     end
   end  
 //==============================================================================
@@ -931,7 +932,7 @@ module parambuf_interface #(
 //==============================================================================
 
 wire bbuf_ldmem_tag_ready_sm;
-assign bbuf_ldmem_tag_ready_sm = wbuf_ldmem_state_q == LDMEM_DONE ? bbuf_ldmem_tag_ready : 'b0;
+assign bbuf_ldmem_tag_ready_sm = (ignore_bias)?0:(wbuf_ldmem_state_q == LDMEM_DONE ? bbuf_ldmem_tag_ready : 'b0);
 //==============================================================================
 // Tag-based synchronization for double buffering / BBUFF
 //==============================================================================
@@ -1068,7 +1069,8 @@ assign bbuf_ldmem_tag_ready_sm = wbuf_ldmem_state_q == LDMEM_DONE ? bbuf_ldmem_t
     
     // TODO: Make sure that these do not need to be registered
     assign parambuf_tag_ready = wbuf_tag_ready && bbuf_tag_ready;
-    assign parambuf_compute_ready = wbuf_compute_tag_ready && bbuf_compute_tag_ready;
+    assign parambuf_compute_ready =(ignore_bias)? wbuf_compute_tag_ready : (wbuf_compute_tag_ready && bbuf_compute_tag_ready);
+   
     //assign parambuf_tag_done = wbuf_tag_done && bbuf_tag_done;
 
   	// It seems like the following signals are useless, I don't think the value of these signals is important here

@@ -2,21 +2,18 @@
 // Instruction Memory
 
 `timescale 1ns/1ps
-module instruction_memory
-#(
+module instruction_memory #(
   // Instructions
     parameter integer  NUM_INST_IN                  = 2,
     parameter integer  INST_DATA_WIDTH              = 32,
     parameter integer  INST_ADDR_WIDTH              = 10,
     parameter integer  MULTIPLE_MEMORIES            = 1
-    
-)
-(
+)(
   // clk, reset
     input  wire                                         clk,
-    input  wire                                         reset,
-	
+    input  wire                                         reset,	
 	input  wire											start,
+	input  wire                                         genesys_done, // DEBUG
   // Decoder <- imem
     input  wire                                         imem_rd_req,
     input  wire  [ INST_ADDR_WIDTH      -1 : 0 ]        imem_rd_addr,
@@ -28,6 +25,7 @@ module instruction_memory
 	
 	// TO/FROM AXI interface
 	output reg											imem_wr_start,
+	output reg                      imem_wr_req,
 	input  wire											imem_wr_done,
 	
 	input  wire											imem_wr_data_valid,
@@ -62,7 +60,7 @@ module instruction_memory
 	reg [INST_ADDR_WIDTH-MEM_MUX_SEL_BIT_WIDTH-1:0] imem_wr_addr, imem_wr_addr_max;
 	
 	reg [1:0] imem_not_empty;
-	reg imem_wr_buf, imem_rd_buf, imem_wr_req, imem_rd_start;
+	reg imem_wr_buf, imem_rd_buf, imem_rd_start;
 	
 	//assign imem_block_ready = |imem_not_empty ;
 	assign imem_block_ready = ((imem_rd_addr[INST_ADDR_WIDTH-1:MEM_MUX_SEL_BIT_WIDTH] == (imem_wr_addr_max-1)) || (imem_wr_addr_max==0) )?0:1 ;
@@ -80,14 +78,16 @@ module instruction_memory
         end
       end
 	  IMEM_WR_WAIT: begin
-        if (imem_wr_req )
-        begin
+        if (imem_wr_req) begin
           imem_wr_state_d = IMEM_WR_DATA;
         end
       end
       IMEM_WR_DATA: begin
-        if (imem_wr_done)
+        if (imem_wr_done) begin
           imem_wr_state_d = IMEM_WR_DONE;
+        end else if (genesys_done) begin
+          imem_wr_state_d = IMEM_IDLE;
+        end 
       end
 	  IMEM_WR_DONE: begin
         imem_wr_state_d = IMEM_WR_WAIT;
@@ -109,6 +109,9 @@ module instruction_memory
         if ( imem_rd_start )
         begin
           imem_rd_state_d = IMEM_RD_DATA;
+        end
+        else if ( genesys_done )begin
+          imem_rd_state_d = IMEM_IDLE;
         end
       end
       IMEM_RD_DATA: begin
@@ -151,9 +154,9 @@ module instruction_memory
 		end 
 		
 		if( imem_rd_state_q == IMEM_RD_DONE) begin
-		//  imem_rd_buf <= ~imem_rd_buf;
-		//  imem_rd_start <= imem_not_empty[~imem_rd_buf];
-		    imem_rd_start <= imem_block_ready;
+		  imem_rd_buf <= ~imem_rd_buf;
+		  imem_rd_start <= imem_not_empty[~imem_rd_buf];
+//		    imem_rd_start <= imem_block_ready;
 		end 
 		else begin
 		  imem_rd_buf <= imem_rd_buf;
@@ -191,17 +194,14 @@ module instruction_memory
       imem_wr_start <= (imem_wr_state_q != IMEM_WR_DATA) && (imem_wr_state_d == IMEM_WR_DATA);
   end
 
-  always @(posedge clk)
-  begin
-    if (reset) begin
+  always @(posedge clk) begin
+    if (reset || genesys_done) begin
       imem_wr_addr <= 0;
       imem_wr_addr_max <= 0;
-    end
-    else if( imem_wr_state_q == IMEM_WR_DONE) begin
+    end else if( imem_wr_state_q == IMEM_WR_DONE) begin
 	  imem_wr_addr <= 0;
 	  imem_wr_addr_max <= imem_wr_addr ;
-	end
-	else if( imem_wr_data_valid) begin
+	end else if( imem_wr_data_valid) begin
       imem_wr_addr <= imem_wr_addr + 'd1;
      // imem_wr_addr_max <= imem_wr_addr  + 'd1 ;
     end

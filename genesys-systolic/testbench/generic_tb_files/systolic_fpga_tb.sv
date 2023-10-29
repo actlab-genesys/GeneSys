@@ -747,7 +747,7 @@ function void m04_simd_axi_fill_memory (
   
   while (! $feof(file_simddata2)) begin
     $fscanf(file_simddata2,"%d\n",read_sdata);  // without this it goes into an infinite loop. Read and discard the value
-    m04_simd_axi.mem_model.backdoor_memory_write_4byte(base_ptr + 1048576 + (slot2 * 4), read_sdata);
+    m04_simd_axi.mem_model.backdoor_memory_write_4byte(base_ptr + 23068672  + (slot2 * 4), read_sdata);
     slot2++;
   end 
   
@@ -1615,8 +1615,8 @@ function automatic bit check_output_data( integer output_num_tiles,
   bit [31:0]        ret_rd_value = 32'h0;
   bit error_found = 0;
   bit [63:0] obuf_ptr1         = axi03_obuf_ptr0_ptr;
-  bit [63:0] vmem_ptr1         = 2097152 ;
-  bit [63:0] vmem_ptr2         = 4194304 ;
+  bit [63:0] vmem_ptr1         = 46137344 ;
+  bit [63:0] vmem_ptr2         = 69206016 ;
   integer error_counter;
   integer tile_counter = 0;
   integer tile_elements_counter = 0;
