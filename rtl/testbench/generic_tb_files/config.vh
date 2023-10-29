@@ -1,7 +1,7 @@
-`define RESNET18_GEMM
+`define SAC_4x4
 
 //////////////// From Compiler 
-`ifdef RESNET18_GEMM
+`ifdef SAC_16x16
     parameter integer  BBUF_DEPTH                   = 1024;
     parameter integer  IBUF_DEPTH                   = 2048;
     parameter integer  OBUF_DEPTH                   = 2048;
@@ -9,6 +9,15 @@
     parameter integer  VMEM_ADDR_WIDTH              = 11;
     parameter integer  ARRAY_N                      = 16;
     parameter integer  ARRAY_M                      = 16;
+    parameter integer  INSTR_DEPTH                  = 2048;
+`elsif SAC_4x4
+    parameter integer  BBUF_DEPTH                   = 1024;
+    parameter integer  IBUF_DEPTH                   = 2048;
+    parameter integer  OBUF_DEPTH                   = 2048;
+    parameter integer  WBUF_DEPTH                   = 2048;
+    parameter integer  VMEM_ADDR_WIDTH              = 11;
+    parameter integer  ARRAY_N                      = 4;
+    parameter integer  ARRAY_M                      = 4;
     parameter integer  INSTR_DEPTH                  = 2048;
 `elsif RESNET_32x32
     parameter integer  BBUF_DEPTH                   = 1024;

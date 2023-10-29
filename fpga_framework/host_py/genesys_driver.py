@@ -11,7 +11,8 @@ class GenesysDriver:
                     test_name= 'resnet50_benchmark16x16_endtoend',
                     data_info_file = '/home/lavanya/micro_tutorial/genesys-fpga/fpga_framework/host_py/resnet50_operand_storage_info.json',
                     base_path = '/home/lavanya/genesys-16x16/tests/',
-                    genesys_binary = '/home/lavanya/genesys-16x16/systolic_fpga.hw.xclbin',                    
+                    genesys_binary = '/home/lavanya/genesys-16x16/systolic_fpga.hw.xclbin', 
+                    relative_path = 0                   
                     ):
 
         self.genesys_binary = genesys_binary
@@ -55,6 +56,7 @@ class GenesysDriver:
         self.data_info_file = data_info_file
         self.base_path  = base_path     
         self.num_blocks = 1   
+        self.relative_path = relative_path
       
     def get_devices(self):
         platforms = cl.get_platforms()
@@ -133,10 +135,16 @@ class GenesysDriver:
         inst_paths = []
         data_info_f = open(self.data_info_file)
         data_info = json.load(data_info_f)
+        file_path = ""
+        inst_path = ""
         for (layer,value) in data_info.items():
             layer_inputs = data_info[layer]["inputs"]
             for layer_input in layer_inputs.items():
-                file_path = str(layer_input[1].get("path"))
+                file_path_partial = str(layer_input[1].get("path"))
+                if (self.relative_path):
+                    file_path = self.base_path + file_path_partial
+                else:
+                    file_path = file_path_partial
                 offset = int(layer_input[1].get("offset"))/4
                 if ((layer_input[1].get("buffer") == "VMEM1") or (layer_input[1].get("buffer") == "VMEM2")):
                     self.load(file_path, systolic_input_buffer, int(offset))
@@ -148,7 +156,10 @@ class GenesysDriver:
             inst_offset = int(layer_inst["offset"])/4
             inst_offsets.append(inst_offset)
             path = layer_inst["path"]
-            inst_path = path[0:len(path)-16] + "decimal.txt"
+            if (self.relative_path):
+                inst_path = self.base_path + path[0:len(path)-16] + "decimal.txt"
+            else:
+                inst_path = path[0:len(path)-16] + "decimal.txt"
             inst_paths.append(inst_path)
             num_blocks+=1
 
@@ -187,10 +198,15 @@ class GenesysDriver:
         golden_output = np.zeros((self.output_buffer_size,), dtype=np.int32)
         data_info_f = open(self.data_info_file)
         data_info = json.load(data_info_f)
+        file_path = ""
         for (layer,value) in data_info.items():
             layer_outputs = data_info[layer]["outputs"]
             for layer_output in layer_outputs.items():
-                file_path = str(layer_output[1].get("path"))
+                file_path_partial = str(layer_output[1].get("path"))
+                if (self.relative_path):
+                    file_path = self.base_path + file_path_partial
+                else:
+                    file_path = file_path_partial
                 offset = int(layer_output[1].get("offset"))/4
                 self.num_output = self.load(file_path, golden_output, 0)
                 print(file_path,int(offset))

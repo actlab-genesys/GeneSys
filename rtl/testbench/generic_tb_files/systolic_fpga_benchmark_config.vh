@@ -1,4 +1,4 @@
-`define FFT_LAYER5_SQRT
+`define CONV_RELU
 
     bit [31:0] instruction_base_addr    = 32'd67108864;
 
