@@ -13,11 +13,7 @@ This README describes how to run GeneSys on a local FPGA instance. We do support
 
 # Software Requirements
 
-OS: Ubuntu 18.04.4 LTS
-RTL Simulation Tool: Xilinx Vivado 2020.2 and Xilinx Vitis 2020.2
-
-Note: For RTL Simulation the DNN accelerator's memory channels require an AXI Slave Verification IP.
-      We have used Xilinx AXI Verification IP (https://www.xilinx.com/products/intellectual-property/axi-vip.html).
+To install any needed dependencies please proceed to the installation directory. In this directory, you will find a setup script as well as the needed .yml file to create a conda environment to run GeneSys in. Please run this setup script which will create a conda env for you. 
 
 # Installation
 Please refer to the README in the compiler folder! You will find step by step instructions there!
