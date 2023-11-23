@@ -6,18 +6,19 @@ are a systolic array (for operations such as convolution) and a SIMD array (for 
 GeneSys is parametrizable, and it is possible to automatically generate hardware with different numbers of processing 
 elements, bit-widths, on-chip buffer configurations and memory bandwidth. GeneSys acts like a co-processor connected
 to the host via the PCIe bus. The below figure demonstrates a high level diagram of GeneSys:
-![High Level Diagram](https://raw.githubusercontent.com/actlab-genesys/GeneSys/new-organization/overview/framework_diagram/high_level_diagram.jpg?token=GHSAT0AAAAAACJSA5EWXZP7HRIO3VR2ANSOZK7RI5Q)
+![High Level Diagram](https://github.com/actlab-genesys/GeneSys/blob/new-organization/overview/framework_diagram/high_level_diagram.jpg?raw=true)
+
 
 
 The target workloads for GeneSys are CNNs, RNNs/LSTM and Transformers.
 
 # Architecture
-![Architecture Diagram](https://raw.githubusercontent.com/actlab-genesys/GeneSys/new-organization/overview/architecture/systolic_array_architecture.jpg?token=GHSAT0AAAAAACJSA5EX2MOH5RJEX4CFMTUOZK7RF6Q)
+![Architecture Diagram](https://github.com/actlab-genesys/GeneSys/blob/new-organization/overview/architecture/systolic_array_architecture.jpg?raw=true)
 
 (Rohan/Hanyang - Insert commentary on architecture here)
 
 # Compiler Organization
-![Compiler Flow](https://raw.githubusercontent.com/actlab-genesys/GeneSys/new-organization/overview/compiler_organization/compiler_flow.jpg?token=GHSAT0AAAAAACJSA5EXUOOG2BZEZ5GIPQD4ZK7RH5Q)
+![Compiler Flow](https://github.com/actlab-genesys/GeneSys/blob/new-organization/overview/compiler_organization/compiler_flow.jpg?raw=true)
 
 (Chris - Insert commentary here)
 
