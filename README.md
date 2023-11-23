@@ -24,12 +24,12 @@ The target workloads for GeneSys are CNNs, RNNs/LSTM and Transformers.
 # Conda Environment Installation
 
 To install any needed dependencies please proceed to the installation directory. In this directory, you will find a setup script as well as the needed .yml file to create a conda environment to run GeneSys in. Please run this setup script which will create a conda env for you. 
-
+```console
+$ ./setup.sh
+```
 # Compiler Installation
 
 The GeneSys compiler uses an embedded architecture description language to create a Hierarchical Architecture Graph for flexibly compiling _mg_-DFGs to different architectures. The GeneSys architecture uses a systolic array centric approach that forms the core convolution engine for implementing DNN algorithms, and can be customized to  run a range of standard DNN topologies.
-
-This document will help you get up and running.  
 
 ### Step 0: Check prerequisites
 The following dependencies must be met by your system:
