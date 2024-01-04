@@ -1,3 +1,6 @@
 [submodule "software_simulator/GeneSys.sim"]
 	path = software_simulator/GeneSys.sim
 	url = https://github.com/actlab-genesys/GeneSys.sim.git
+[submodule "compiler/GeneSys.codelets"]
+	path = compiler/GeneSys.codelets
+	url = https://github.com/actlab-genesys/GeneSys.codelets.git
