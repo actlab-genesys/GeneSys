@@ -1,4 +1,4 @@
-![GeneSys Image](https://actlab-genesys.github.io/home/assets/images/genesys-logo.jpg)
+![GeneSys Image](https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/genesys_logo.png)
 # 1 Overview
 
 Genesys is a programmable Deep Neural Networks (DNN) accelerator generator. The core computation engines in GeneSys
