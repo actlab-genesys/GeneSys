@@ -85,16 +85,16 @@ Since each instruciton only has 16 bit for address, each buffer address requires
 <img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/inst_tandem_addr.png" class="center">
 </p>
 
-Line 187 specify the DRAM store address for Tandem Processor. *ST_CONFIG_BASE_ADDR* means it is a store address. For layers that need to load data to tandem proceesor, *LD_CONFIG_BASE_ADDR* is used. *VMEM2* specifies the vmem the store operation is reading the data from. Each Tandem Processor lane has two sctrachpads *VMEM1* and *VMEM2*. The store address from *vmem2* in this case is 26210304.
+Line 187 and 188 specify the DRAM store address for Tandem Processor. *ST_CONFIG_BASE_ADDR* means it is a store address. For layers that need to load data to tandem proceesor, *LD_CONFIG_BASE_ADDR* is used. *VMEM2* specifies the vmem the store operation is reading the data from. Each Tandem Processor lane has two sctrachpads *VMEM1* and *VMEM2*. The store address from *vmem2* in this case is 26210304.
 
 - *config.vh*
 <p align="center">
-<img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/config_vh.jpg" class="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/config_vh.png" class="center">
 </p>
 
 - *systolic_fpga_benchmark_config.vh*
 <p align="center">
-<img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/config_vh.jpg" class="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/config_vh.png" class="center">
 </p>
 
 Add an entry with the respective instruction, input, and output files generated from the compiler. You could use one of the example entries too for sanity check or as an example. Ensure you use absolute paths to avoid errors. Ensure valid paths are given for all the file variables as shown in the template even if it is not applicable to your test. For example, ADD_ONLY test does not need a bias input, nevertheless, a valid path is given for the variable.
