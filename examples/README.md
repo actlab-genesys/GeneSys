@@ -1,10 +1,10 @@
 # Example GeneSys Flow Using Resnet50
 Here is an exmaple to walk throuh all pieces of GeneSys framework including the compilation, RTL simulation, RTL emulation, and ASIC synthesis. As example, we uses Resnet50 as the model, a 16x16 Systoic Core, and a 16 lane Tandem Processor as the GeneSys hardware instance. 
 
-## 1 ONNX Model 
-Navigate to [benchmark](https://github.com/actlab-genesys/GeneSys/tree/new-organization/benchmarks) directory and download the Resnet50 ONNX mode from ***Download ONNX Models*** section. You can use Neutron to view a computation graph of this model.
+## 1. ONNX Model 
+Navigate to [benchmark](https://github.com/actlab-genesys/GeneSys/tree/new-organization/benchmarks) directory and download the Resnet50 ONNX mode from *Download ONNX Models* section. You can use Neutron to view a computation graph of this model.
 
-## 2 Compile Model TBF
+## 2. Compile Model TBF
 Go to the terminal that contains the ONNX model
 Navigate to the ```GeneSys``` directory and run the following command to compile. Make sure to fill in ```ONNX_PATH``` with the path to the ONNX file:
 
@@ -24,7 +24,7 @@ In this directory, you can see the five different outputs that you will see for 
 
 TODO: We need to mention where the hardware configuration in entered.
 
-## 3 Run Software Simulation
+## 3. Run Software Simulation TBF
 ### 3.1 Locate the Compiled Test
 A test folder can be obtained by the following two method:
 1. Download the pre-compiled benchmark provided in the benchmark folder
@@ -40,10 +40,12 @@ As an example, we will use the resnet50 16x16 test to work through the procedure
 
 Besides sub-directory for each layer, the test folder also contains an GeneSys Architecture config file ```modelname_arch_cfg.json```. This file contains the hardware specification that the compiler used to compile the test, the hardware configuration specified here must match the hardware configuration in step 3,
 
-## 3.2 Configure the Systoic Core and Tandem Processor
+For all the following activity, we use ***layer0_conv_bias_relu1*** from the Resnet50 compiled layer as example. 
+
+### 3.2 Configure the Systoic Core and Tandem Processor
 Configure the Systolic and SIMD config files in the config directory
 
-## 3.3 Run       
+### 3.3 Run       
 Ro run the simuator with the test, uses the following command format:
 ```console
 python3 genesys_sim/genesys.py <config_path> <testdir> <csv_output_filename>
@@ -55,18 +57,53 @@ python3 genesys_sim/genesys.py configs/ testdir
 ```
 For energy simulations, set --mode energy
 
-## 4 RTL Simulation
-### Step 0: Choose a configuration
-Choose a configuration for your test. For example, if you want to run a test on a 16x16 systolic array, edit genesys_systolic/source/config.vh to ensure that ARRAY_N and ARRAY_M are set to 16. Also make sure that the compiler is configured for a 16x16 systolic array. Once you have compiled the instructions.
+## 4. RTL Simulation
+In this section, we simulate ***layer0_conv_bias_relu1*** in RTL simulation using Vivado. Currently we support RTL simulation on Xilinx Vivado since we use Xilinx AXI Verificaition IP. 
 
-### Step 1: Add compiler instructions
-Open genesys_systolic/testbench/generic_tb_files/systolic_fpga_benchmark_config.vh and add an entry with the respective instruction, input, and output files generated from the compiler. You could use one of the example entries too for sanity check or as an example. Ensure you use absolute paths to avoid errors. Ensure valid paths are given for all the file variables as shown in the template even if it is not applicable to your test. For example, ADD_ONLY test does not need a bias input, nevertheless, a valid path is given for the variable.
+### Step 1: Create a GeneSys Vivado Project  
+Create an Vivado GeneSys project and add the files in the following directories as design sources, and set the systolic_fpga_tb.sv as top module.
+ - *GeneSys/rtl/genesys_top_module*
+ - *GeneSys/rtl/memory_interface*
+ - *GeneSys/rtl/systolic_core*
+ - *GeneSys/rtl/tandem*
+ - *GeneSys/rtl/xilinx_macros*
 
-### Step 2: Launch Vivado
-Start Vivado and add all the files in the subdirectories of genesys_systolic/source/ and genesys_systolic/testbench/generic_tb_files/ as sources.
+### Step 2: Add and Configure the Architecture and Testbench Config File
+Add the testbench configuration files in *GeneSys/rtl/testbench_config*. These config files need to be configured based on the generated instrution file in the *layer0_conv_bias_relu1*. We go through each test file here.
 
-### Step 3: Verify correct IPs
+- *conv_bias_relu1_string_final.txt* inside the ***layer0_conv_bias_relu1*** folder from the compiled test
+
+<p align="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/inst_systolic_addr.png" class="center">
+</p>
+
+Above figure is the readable string version of the instruction file. One of the info it specifies is the memory addresses for each buffer. The buffer addresses need to be copied to the testbench for the testbench to load/store data to the correct addresses. Line2 to line9 specify the dram address for the each buffer. Specificlly, WBUF represents weight buffer, OBUF represents output buffer, BBUF represents bias buffer, and IBUF represents the input buffer. 
+
+Since each instruciton only has 16 bit for address, each buffer address requires two instructions to specify its 32 bit address. *SET_BASE_ADDR LOW* represents the lower 16 bit address and *SET_BASE_ADDR HIGH* represents the higher 16 bit address. The final address is calcluated as *MSB 16 bit address << 16 + LSB 16 bit address*. For example, input buffer address is $451<<16+40960=29597696$. As such, the weight buffer address is 229376, bias buffer is 430080, and output buffer is 0.
+
+<p align="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/inst_tandem_addr.png" class="center">
+</p>
+
+Line 187 specify the DRAM store address for Tandem Processor. *ST_CONFIG_BASE_ADDR* means it is a store address. For layers that need to load data to tandem proceesor, *LD_CONFIG_BASE_ADDR* is used. *VMEM2* specifies the vmem the store operation is reading the data from. Each Tandem Processor lane has two sctrachpads *VMEM1* and *VMEM2*. The store address from *vmem2* in this case is 26210304.
+
+- *config.vh*
+<p align="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/config_vh.jpg" class="center">
+</p>
+
+- *systolic_fpga_benchmark_config.vh*
+<p align="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/config_vh.jpg" class="center">
+</p>
+
+Add an entry with the respective instruction, input, and output files generated from the compiler. You could use one of the example entries too for sanity check or as an example. Ensure you use absolute paths to avoid errors. Ensure valid paths are given for all the file variables as shown in the template even if it is not applicable to your test. For example, ADD_ONLY test does not need a bias input, nevertheless, a valid path is given for the variable.
+
+### Step 3: Create AXI Verification IPs
 You will need to generate the AXI Verification IPs for running simulation. In Vivado, go to IP Catalog and look for AXI Verification IP. Six AXI VIPs need to be created and use the same names as below. This might require a Xilinx Vivado License.
+
+### Step 4: Launch the Test
+
 
 ## 5 RTL Emulation
 ### Step 1: Emulation Build
