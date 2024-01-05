@@ -74,7 +74,7 @@ Add the testbench configuration files in *GeneSys/rtl/testbench_config*. These c
 - *conv_bias_relu1_string_final.txt* inside the ***layer0_conv_bias_relu1*** folder from the compiled test
 
 <p align="center">
-<img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/inst_systolic_addr.png" class="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/inst_systolic_addr.png" class="center">
 </p>
 
 Above figure is the readable string version of the instruction file. One of the info it specifies is the memory addresses for each buffer. The buffer addresses need to be copied to the testbench for the testbench to load/store data to the correct addresses. Line2 to line9 specify the dram address for the each buffer. Specificlly, WBUF represents weight buffer, OBUF represents output buffer, BBUF represents bias buffer, and IBUF represents the input buffer. 
@@ -82,21 +82,21 @@ Above figure is the readable string version of the instruction file. One of the 
 Since each instruciton only has 16 bit for address, each buffer address requires two instructions to specify its 32 bit address. *SET_BASE_ADDR LOW* represents the lower 16 bit address and *SET_BASE_ADDR HIGH* represents the higher 16 bit address. The final address is calcluated as *MSB 16 bit address << 16 + LSB 16 bit address*. For example, input buffer address is $451<<16+40960=29597696$. As such, the weight buffer address is 229376, bias buffer is 430080, and output buffer is 0.
 
 <p align="center">
-<img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/inst_tandem_addr.png" class="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/inst_tandem_addr.png" class="center">
 </p>
 
 Line 187 and 188 specify the DRAM store address for Tandem Processor. *ST_CONFIG_BASE_ADDR* means it is a store address. For layers that need to load data to tandem proceesor, *LD_CONFIG_BASE_ADDR* is used. *VMEM2* specifies the vmem the store operation is reading the data from. Each Tandem Processor lane has two sctrachpads *VMEM1* and *VMEM2*. The store address from *vmem2* in this case is 26210304.
 
 - *config.vh*
 <p align="center">
-<img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/config_vh.png" class="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/config_vh.png" class="center">
 </p>
 
 Config.vh specfies the archiectural parameters for the GeneSys accelerator. *xBUF_DEPTH* specify the depth of a single bank of the scratchpad. *ARRAY_N* and *ARRAY_M* specify the PE dimension of the Systolic Core, *ARRAY_N* also specifies the lane count of the Tandem Processor. The dimension of the Systloic Core are required to match with the dimension of Tandem Processor. In this case, the Systolic Core is 16x16 and Tandem processor has 16 lanes. One thing to note is that the configuration Config.vh are required to match with the GeneSys Architecture config file used in compilation of the tests. 
 
 - *systolic_fpga_benchmark_config.vh*
 <p align="center">
-<img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/rtl_testbench_config.png" class="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/rtl_testbench_config.png" class="center">
 </p>
 
 Add an entry with the respective instruction, input, and output files generated from the compiler. You could use one of the example entries too for sanity check or as an example. Ensure you use absolute paths to avoid errors. Ensure valid paths are given for all the file variables as shown in the template even if it is not applicable to your test. For example, ADD_ONLY test does not need a bias input, nevertheless, a valid path is given for the variable.
