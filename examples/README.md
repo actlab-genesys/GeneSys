@@ -1,5 +1,5 @@
 # Example GeneSys Flow Using Resnet50
-Here is an exmaple to walk throuh all pieces of GeneSys framework including the compilation, RTL simulation, RTL emulation, and ASIC synthesis. As example, we uses Resnet50 as the model, a 16x16 Systoic Core, and a 16 lane Tandem Processor as the GeneSys hardware instance. 
+Here is an exmaple to walk throuh all pieces of GeneSys framework including the compilation, RTL simulation, RTL emulation, FPGA synthesis and implementation, and ASIC synthesis. As example, we uses Resnet50 as the model, a 16x16 Systoic Core, and a 16 lane Tandem Processor as the GeneSys hardware instance. 
 
 ## 1. ONNX Model 
 Navigate to [benchmark](https://github.com/actlab-genesys/GeneSys/tree/new-organization/benchmarks) directory and download the Resnet50 ONNX mode from *Download ONNX Models* section. You can use Neutron to view a computation graph of this model.
@@ -91,10 +91,32 @@ Config.vh specfies the archiectural parameters for the GeneSys accelerator. *xBU
 <img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/rtl_testbench_config.png" class="center">
 </p>
 
-Add an entry with the respective instruction, input, and output files generated from the compiler. You could use one of the example entries too for sanity check or as an example. Ensure you use absolute paths to avoid errors. Ensure valid paths are given for all the file variables as shown in the template even if it is not applicable to your test. For example, ADD_ONLY test does not need a bias input, nevertheless, a valid path is given for the variable.
+This config file specify information used in the tesbench. It requires two sets of information. The first set is memory addresses which is from *Line10 to Line18*. We enter the memory address we computed in the previous section based on instruction to corresponding buffer vaiable. If some buffer is not used in the test, *obuf_ptr1_st_offset* for example, enter 0. *last_layer_obuf* need to be set to 1 if the final output is stored on obuf, and 0 if the final output is stgored on vmem.
 
-### Step 3: Create AXI Verification IPs
-You will need to generate the AXI Verification IPs for running simulation. In Vivado, go to IP Catalog and look for AXI Verification IP. Six AXI VIPs need to be created and use the same names as below. This might require a Xilinx Vivado License.
+The second set is file address to insturction and golden data files from *Line28 to Line 45*. Add an entry with the respective instruction, input, and output files generated from the compiler. You could use one of the example entries too for sanity check or as an example. Ensure you use absolute paths to avoid errors. Ensure valid paths are given for all the file variables as shown in the template even if it is not applicable to your test. For example, ADD_ONLY test does not need a bias input, nevertheless, a valid path is given for the variable.
+
+### Step 3: Create and Configure AXI Verification IPs
+We need to generate the AXI Verification IPs all the strachpads for running simulation. In Vivado, go to *IP Catalog* and look for *AXI Verification* IP. Six AXI VIPs need to be created and use the same names as below. This might require a Xilinx Vivado License. 
+- control_systolic_fpga_vip
+Configure the AXI Verificartion IP for controller as below. Name the IP *control_systolic_fpga_vip*
+<p align="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/veri_ip_control_1.png" class="center">
+</p>
+
+<p align="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/veri_ip_control_2.png" class="center">
+</p>
+
+
+- slv_mxx_xbuf_axi_vip
+Configure the AXI verification IP for sctrachpad buffers as follow, the names should be the following: *slv_m00_imem_axi_vip*, *slv_m01_parambuf_axi_vip*, *slv_m02_ibuf_axi_vip*, *slv_m03_obuf_axi_vip*, *slv_m04_simd_axi_vip*
+<p align="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/veri_ip_buf_1.png" class="center">
+</p>
+
+<p align="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/veri_ip_buf_2.png" class="center">
+</p>
 
 ### Step 4: Launch the Test
 
