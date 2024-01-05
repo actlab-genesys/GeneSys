@@ -13,15 +13,6 @@ $ compile-genesys -m <ONNX_PATH> -e "default
 ```
 
 You should see a new folder in the current working directory called ```genesys_compiler_output```.
-
-In this directory, you can see the five different outputs that you will see for each layer in the output.
-
-* ```_string_final.txt```: The assembly instructions
-* ```_binary.txt```: The assembled assembly instructions as binary numbers
-* ```_decimal.txt```: The assembled assembly instructions as decimal numbers
-* ```_json.json```: Information about the tensor operands and codelet operations
-* ```_operations_idx.txt```: Pseudocode for the codelet
-
 TODO: We need to mention where the hardware configuration in entered.
 
 ## 3. Run Software Simulation TBF
@@ -30,13 +21,14 @@ A test folder can be obtained by the following two method:
 1. Download the pre-compiled benchmark provided in the benchmark folder
 2. Compile your own tests following the instructions here TBF
 
-As an example, we will use the resnet50 16x16 test to work through the procedure of running the GeneSys Software Simulator. We first download the resnet50 test from here and unzip it. The resuting test directory is organized by layer. In each layer directory, you can see the five different outputs.
+As an example, we will use the resnet50 16x16 test to work through the procedure of running the GeneSys Software Simulator. We first download the resnet50 test from here and unzip it. The resuting test directory is organized by layer. In each layer directory, you can see the five different output file and one data directory. 
 
 * ```_string_final.txt```: The assembly instructions
 * ```_binary.txt```: The assembled assembly instructions as binary numbers
 * ```_decimal.txt```: The assembled assembly instructions as decimal numbers
 * ```_json.json```: Information about the tensor operands and codelet operations
 * ```_operations_idx.txt```: Pseudocode for the codelet
+* ```data```: Data directory that contains randomly generated golden input/output data for verification
 
 Besides sub-directory for each layer, the test folder also contains an GeneSys Architecture config file ```modelname_arch_cfg.json```. This file contains the hardware specification that the compiler used to compile the test, the hardware configuration specified here must match the hardware configuration in step 3,
 
