@@ -58,7 +58,7 @@ python3 genesys_sim/genesys.py configs/ testdir
 For energy simulations, set --mode energy
 
 ## 4. RTL Simulation
-In this section, we simulate ***layer0_conv_bias_relu1*** in RTL simulation using Vivado. Currently we support RTL simulation on Xilinx Vivado since we use Xilinx AXI Verificaition IP. 
+In this section, we simulate one layer from the Resnet50 benchmark, ***layer0_conv_bias_relu1***, in RTL simulation using Vivado. Currently we support RTL simulation on Xilinx Vivado since we use Xilinx AXI Verificaition IP. 
 
 ### Step 1: Create a GeneSys Vivado Project  
 Create an Vivado GeneSys project and add the files in the following directories as design sources, and set the systolic_fpga_tb.sv as top module.
@@ -92,9 +92,11 @@ Line 187 and 188 specify the DRAM store address for Tandem Processor. *ST_CONFIG
 <img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/config_vh.png" class="center">
 </p>
 
+Config.vh specfies the archiectural parameters for the GeneSys accelerator. *xBUF_DEPTH* specify the depth of a single bank of the scratchpad. *ARRAY_N* and *ARRAY_M* specify the PE dimension of the Systolic Core, *ARRAY_N* also specifies the lane count of the Tandem Processor. The dimension of the Systloic Core are required to match with the dimension of Tandem Processor. In this case, the Systolic Core is 16x16 and Tandem processor has 16 lanes. One thing to note is that the configuration Config.vh are required to match with the GeneSys Architecture config file used in compilation of the tests. 
+
 - *systolic_fpga_benchmark_config.vh*
 <p align="center">
-<img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/config_vh.png" class="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/new-organization/docs/figures/rtl_testbench_config.png" class="center">
 </p>
 
 Add an entry with the respective instruction, input, and output files generated from the compiler. You could use one of the example entries too for sanity check or as an example. Ensure you use absolute paths to avoid errors. Ensure valid paths are given for all the file variables as shown in the template even if it is not applicable to your test. For example, ADD_ONLY test does not need a bias input, nevertheless, a valid path is given for the variable.
