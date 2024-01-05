@@ -32,7 +32,7 @@ The compiler for GeneSys starts with an ONNX description of an ML algorithm and 
 </p>
 
 ## 1.3 ISA
-GeneSys is a programmable accelerator which offers a large set of instructions such that it can accelerate DNNs. Directly supported operations include GEMM, convolution, non-linear activation functions, and pooling.
+GeneSys is a programmable accelerator which offers a large set of instructions such that it can accelerate DNNs. Directly supported operations include GEMM, convolution, non-linear activation functions, and pooling. We provide the GeneSys ISA [here](https://github.com/actlab-genesys/GeneSys/blob/main/docs/GeneSys_ISA.xlsx).
 
 ## 1.4 Verification Infrastructure
 (Rohan/Hanyang)
