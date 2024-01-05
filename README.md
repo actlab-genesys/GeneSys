@@ -9,7 +9,7 @@ GeneSys is parametrizable, and it is possible to automatically generate hardware
 elements, bit-widths, on-chip buffer configurations and memory bandwidth. GeneSys acts like a co-processor connected
 to the host via the PCIe bus. The below figure demonstrates a high level diagram of GeneSys:
 <p align="center">
-<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/genesys-workflow.png" class="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/genesys-workflow.jpg" class="center">
 </p>
 
 
