@@ -147,7 +147,6 @@ Now run the following command:
 $ python3 host.py
 ```
 
-
 ## 3.6 ASIC Synthesis
 ### Step 0: 
 Move read_rtl_genesys.tcl and run_dc_SIMD_4x4.tcl to a directory containing the needed rtl files which are listed in read_rtl_genesys.tcl
@@ -162,3 +161,23 @@ Finally, run:
 ```console
 $ source run_dc_genesys.tcl
 ```
+# Citing GeneSys
+If you used GeneSys in your publification or found this work helpful, please considering citing GeneSys.
+```
+@INPROCEEDINGS{tandem_processor-asplos24,
+  author={Ghodrati, Soroush and Kinzer, Sean and Xu, Hanyang and Mahapatra, Rohan and Ahn, Byung Hoon and Wang, Dong Kai and Karthikeyan, Lavanya and Yazdanbakhsh, Amir and Park, Jongse  and Kim, Nam Sung and Esmaeilzadeh, Hadi},
+  booktitle={ASPLOS '24: 29th ACM International Conference on Architectural Support for Programming Languages and Operating Systems}, 
+  title={Tandem processor: grappling with emerging operators in neural networks}, 
+  year={2024},
+  volume={},
+  number={},
+  pages={}
+}
+```
+
+# Notable Publications based on GeneSys
+1. H. Esmaeilzadeh et al., "VeriGOOD-ML: An Open-Source Flow for Automated ML Hardware Synthesis," 2021 IEEE/ACM International Conference On Computer Aided Design (ICCAD), Munich, Germany, 2021, pp. 1-7, doi: 10.1109/ICCAD51958.2021.9643449.
+
+
+
+# Acknowledgment
