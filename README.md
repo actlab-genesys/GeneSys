@@ -165,7 +165,7 @@ $ source run_dc_genesys.tcl
 If you used GeneSys in your publification or found this work helpful, please considering citing GeneSys.
 ```
 @INPROCEEDINGS{tandem_processor-asplos24,
-  author={Ghodrati, Soroush and Kinzer, Sean and Xu, Hanyang and Mahapatra, Rohan and Ahn, Byung Hoon and Wang, Dong Kai and Karthikeyan, Lavanya and Yazdanbakhsh, Amir and Park, Jongse  and Kim, Nam Sung and Esmaeilzadeh, Hadi},
+  author={Ghodrati, Soroush and Kinzer, Sean and Xu, Hanyang and Mahapatra, Rohan and Ahn, Byung Hoon and Wang, Dong Kai and Karthikeyan, Lavanya and Yazdanbakhsh, Amir and Park, Jongse and Kim, Nam Sung and Esmaeilzadeh, Hadi},
   booktitle={ASPLOS '24: 29th ACM International Conference on Architectural Support for Programming Languages and Operating Systems}, 
   title={Tandem processor: grappling with emerging operators in neural networks}, 
   year={2024},
