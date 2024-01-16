@@ -4,6 +4,8 @@
 [submodule "compiler/GeneSys.codelets"]
 	path = compiler/GeneSys.codelets
 	url = https://github.com/actlab-genesys/GeneSys.codelets.git
+	branch = main
 [submodule "architecture/GeneSys.arch"]
 	path = architecture/GeneSys.arch
 	url = https://github.com/actlab-genesys/GeneSys.arch.git
+	branch = main
