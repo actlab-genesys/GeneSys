@@ -8,7 +8,7 @@ Genesys is a programmable Deep Neural Networks (DNN) accelerator generator. The 
 are a systolic array (for operations such as convolution) and a SIMD array (for operations such as ReLU and pooling). 
 GeneSys is parametrizable, and it is possible to automatically generate hardware with different numbers of processing 
 elements, bit-widths, on-chip buffer configurations and memory bandwidth. GeneSys acts like a co-processor connected
-to the host via the PCIe bus. The below figure demonstrates a high level diagram of GeneSys:
+to the host via the PCIe bus. The below figure demonstrates GeneSys's innovations across the entire compute stack:
 
 <p align="center">
 <img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/genesys-overview.png" class="center">
