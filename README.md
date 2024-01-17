@@ -2,10 +2,6 @@
 <img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/genesys_logo.png" class="center">
 </p>
 
-<p align="center">
-<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/genesys_overview.png" class="center">
-</p>
-
 # 1 Overview
 
 Genesys is a programmable Deep Neural Networks (DNN) accelerator generator. The core computation engines in GeneSys
@@ -15,7 +11,7 @@ elements, bit-widths, on-chip buffer configurations and memory bandwidth. GeneSy
 to the host via the PCIe bus. The below figure demonstrates a high level diagram of GeneSys:
 
 <p align="center">
-<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/genesys_overview.png" class="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/genesys-overview.png" class="center">
 </p>
 
 The below figure demonstrates a high level workflow to instanciate an genesys NPU hardware design and compile and execute arbitary test on it.
