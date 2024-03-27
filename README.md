@@ -2,9 +2,16 @@
 <img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/genesys_logo.png" class="center">
 </p>
 
+# Access
+
+The sub-modules that contain the various GeneSys components in this repository are access controlled.
+To get access permissions to these components, please fill out the [GeneSys Access sign up form](https://forms.gle/Co7YBvS9YFuTrNzg7).
+If allowable, you will receive GitHub access.
+Feel free to ping us on [Slack](https://join.slack.com/t/genesys-cyw2842/shared_invite/zt-25q8ve5lw-h0u_bLv3fh35iivgT1qkoQ) if you want your request approved more quickly.
+
 # 1 Overview
 
-Genesys is a programmable Deep Neural Networks (DNN) accelerator generator. The core computation engines in GeneSys
+GeneSys is a programmable Deep Neural Network (DNN) accelerator generator. The core computation engines in GeneSys
 are a systolic array (for operations such as convolution) and a SIMD array (for operations such as ReLU and pooling). 
 GeneSys is parametrizable, and it is possible to automatically generate hardware with different numbers of processing 
 elements, bit-widths, on-chip buffer configurations and memory bandwidth. GeneSys acts like a co-processor connected
@@ -33,9 +40,10 @@ Our systolic array configuration is characterized by a unified activation buffer
 </p>
 
 ## 1.2 Compiler 
-The compiler for GeneSys starts with an ONNX description of an ML algorithm and generates an intermediate representation (IR) in the form of a simultaneous-recursive dataflow graph (sr-DFG). The sr-DFG is a recursively defined dataflow graph which enables simultaneous access to all levels of operation granularity for flexibly compiling to different architectures. Once generated from an ONNX file, the sr-DFG is transformed to a series of parameterized operation kernels. The operation kernels are then transformed and optimized by applying an architecture description to the compilation process, which constrains kernel parameters based on hardware attributes such as memory size, bandwidth, and operation capabilities. Once the kernel parameters are evaluated, each statement in the kernel is used to generate sequences of instructions defined by the architecture abstraction. The compilation flow is shown below.
+The compiler for GeneSys starts with an ONNX description of a neural network and generates an intermediate representation (IR) in the form of a fractalized dataflow graph (f-DFG). The f-DFG is a dataflow graph where each vertex contains a sub-f-DFG representing the operation as a series of sub-operations of finer granularities. This enables flexible compilation to different architectures by providing the compiler with access to many granularities of computation, a necessary feature given the diverse ecosystem of DNN accelerators. Once generated from an ONNX file, the f-DFG is mapped to a series of parameterized operation kernels called codelets. The operation kernels are then transformed and optimized by applying an architecture description (Architecture Covenant Graph) to the compilation process, which constrains kernel parameters based on hardware attributes such as memory size, bandwidth, and operation capabilities. Once the kernel parameters are evaluated, each statement in the kernel is used to generate sequences of instructions defined by the Architecture Covenant Graph.
+The compiler flow is pictured below.
 <p align="center">
-<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/compiler_flow.jpg?raw=true" width="800" height="500" class="center">
+<img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/compiler_flow.jpg?raw=true" class="center">
 </p>
 
 ## 1.3 ISA
@@ -74,7 +82,7 @@ Go to the terminal that contains the ONNX model
 Navigate to the ```GeneSys``` directory and run the following command to compile. Make sure to fill in ```ONNX_PATH``` with the path to the ONNX file:
 
 ```console
-$ compile-genesys -m <ONNX_PATH> -e "default
+$ compile-genesys -m <ONNX_PATH> -e "default"
 ```
 
 You should see a new folder in the current working directory called ```genesys_compiler_output```.
