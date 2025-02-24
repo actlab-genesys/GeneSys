@@ -3,11 +3,13 @@
 </p>
 
 # Access
-
 The sub-modules that contain the various GeneSys components in this repository are access controlled.
 To get access permissions to these components, please fill out the [GeneSys Access sign up form](https://forms.gle/Co7YBvS9YFuTrNzg7).
 If allowable, you will receive GitHub access.
 Feel free to ping us on [Slack](https://join.slack.com/t/genesys-cyw2842/shared_invite/zt-25q8ve5lw-h0u_bLv3fh35iivgT1qkoQ) if you want your request approved more quickly.
+
+# Tandem Processor ASPLOS 2024 Benchmarks
+We have added detailed steps for you to recreate the benchmarks in the ASPLOS 2024 paper Tandem Processor: Grappling with Emerging Operators in Neural Networks [here](https://github.com/actlab-genesys/GeneSys/blob/main/benchmarks/README.md).
 
 # 1 Overview
 
@@ -21,7 +23,7 @@ to the host via the PCIe bus. The below figure demonstrates GeneSys's innovation
 <img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/genesys-overview.png" class="center">
 </p>
 
-The below figure demonstrates a high level workflow to instanciate an genesys NPU hardware design and compile and execute arbitary test on it.
+The below figure demonstrates a high-level workflow to instantiate a Genesys NPU hardware design and compile and execute arbitrary tests on it.
 <p align="center">
 <img src="https://github.com/actlab-genesys/GeneSys/blob/main/docs/figures/genesys-workflow.jpg" class="center">
 </p>
