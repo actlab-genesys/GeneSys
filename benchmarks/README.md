@@ -18,7 +18,7 @@ This command will produce compiled code in a folder named after the onnx file un
 
 After compiling the models, follow the steps [here](https://github.com/actlab-genesys/GeneSys.sim) to install GeneSys software simulator. To simulate a compiled model, you need to specify the architecture configurations for the GeneSys Accelerator (Systolic Array and Tandem Processor) that matches to the configuration provided to the compiler. These can be found at: ``` GeneSys.sim/configs/tandem-processor-asplos24/simd_config.json``` and ```GeneSys.sim/configs/tandem-processor-asplos24/systolic_config```.
 
-After installing the GeneSys compiler, run the following command to compile target ONNX model:
+After installing the GeneSys software simulator, run the following command to launch the GeneSys software simulator:
 ```bash
 python genesys_sim/genesys.py configs/tandem-processor-asplos24/ PATH-TO-COMPILED-CODE_FOLDER --mode energy
 ```
