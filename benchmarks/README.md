@@ -1,27 +1,28 @@
-# Pre-Compiled Benchmarks
-We pre-compiled some popular neural networks to help your experiment with GeneSys hardware. 
+# Tandem Processor ASPLOS 2024 Benchmarks
+## Overview
+To facilitate baselining and benchmarking on the Tandem Processor for the research community, we have prepared the necessary artifacts, including ONNX models, the GeneSys compiler, and the GeneSys software simulator, to enable the reproduction of the benchmarks presented in the paper. The specific steps and commands are listed below, you will need to be approved for GeneSys access to complete this benchmark. Please fill out the Access Form here: [GeneSys Access Form](https://forms.gle/Co7YBvS9YFuTrNzg7).
 
-|Model Name|GeneSys Hardware Configuration|Link|
-|-|-|-|
-|Resnet50|Systolic Core PE: 16x16, Tandem Processor Lane: 16|[Link](https://drive.google.com/file/d/1_LzRrtGWsf8-AE91nQm20lGW702F4Whg/view?usp=sharing)|
-|Bert|TBF|[Link]()|
+## Step 0 Access ONNX Models
+The Open Neural Network Exchange (ONNX) is an open standard format created to represent machine learning models. GeneSys uses ONNX models to represent the neural networks, and as the required input to the GeneSys Compiler. We have prepared the ONNX model used in Tandem Processor benchmark in Google Drive [here](https://drive.google.com/drive/folders/1gxfW-vH-OI1waZpQJzJ_D9fM9S9ya8pk?usp=sharing). You must fill out the GeneSys Access sign up form and be approved to access GeneSys before we grant the access to this folder.
 
-# Download ONNX Models
-The Open Neural Network Exchange (ONNX) is an open standard format created to represent machine learning models. GeneSys uses ONNX models to represent the neural networks, and as the required input to the GeneSys Compiler. This table provides the download link to the ONNX models we used to compile the benchmarks.
+## Step 1 Compile the models:
+After downloading the ONNX model, follow the steps [here](https://github.com/actlab-genesys/GeneSys.codelets/tree/main) in the GeneSys compiler repository to install the GeneSys compiler from the main branch. To compare ONNX models, you must specify the architecture configurations for the GeneSys Accelerator (Systolic Array and Tandem Processor). The configuration file can be found at: ``` GeneSys.codelets/genesys_configs/tandem-baseline-paper-config.json ```
 
-|Model Name|Link|Description|
-|-|-|-|
-|Resnet50|[Link](https://drive.google.com/file/d/1bKDu6PB0LcMCyJIfPLkS_GMek94ED-NX/view?usp=sharing)|TBF|
-|Bert|[Link]()|TBF|
+After installing the GeneSys compiler, run the following command to compile target ONNX model:
+```bash
+compile-genesys -v -f -m PATH-TO-ONNX-FILE -c genesys_configs/tandem-baseline-paper-config.json
+```
+This command will produce compiled code in a folder named after the onnx file under ``` GeneSys.codelets/genesys_compiler_output ```, you will need this for the next step.
 
-## Required ONNX Model Modification
-Due to the GeneSys Compiler and architecture design choices and constriants, some modifications are required on the ONNX model. These modifications should not affect the model behavior.
+## Step 2 Simulate the Compiled Models on GeneSys Software Simulator:
 
-### Dynamic Inputs
-Describe how we remove dynamic inputs...
+After compiling the models, follow the steps [here](https://github.com/actlab-genesys/GeneSys.sim) to install GeneSys software simulator. To simulate a compiled model, you need to specify the architecture configurations for the GeneSys Accelerator (Systolic Array and Tandem Processor) that matches to the configuration provided to the compiler. These can be found at: ``` GeneSys.sim/configs/tandem-processor-asplos24/simd_config.json``` and ```GeneSys.sim/configs/tandem-processor-asplos24/systolic_config```.
 
-### Other Constaints
-Tbf...
+After installing the GeneSys compiler, run the following command to compile target ONNX model:
+```bash
+python genesys_sim/genesys.py configs/tandem-processor-asplos24/ PATH-TO-COMPILED-CODE_FOLDER --mode energy
+```
+The results will be saved to the test-results folder as a csv file. The file includes all useful statistics of the execution including the tile size, number of tiles, total execution cycle, Systolic Array execution cycle, Tandem Processor execution cycle, and other more detailed statistics.
 
 # Generate GeneSys Micro Benchmark using micro_benchmark_gen.py
 This guide provides instructions on how to use the Command Line Interface (CLI) for generating benchmarks for GeneSys. The CLI of the various scripts support many layers, subgraphs, and models.
