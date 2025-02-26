@@ -3,10 +3,10 @@
 </p>
 
 # Access
-The sub-modules that contain the various GeneSys components in this repository are access controlled.
+The sub-modules that contain the various GeneSys components in this repository are access-controlled.
 To get access permissions to these components, please fill out the [GeneSys Access sign up form](https://forms.gle/Co7YBvS9YFuTrNzg7).
-If allowable, you will receive GitHub access.
-Feel free to ping us on [Slack](https://join.slack.com/t/genesys-cyw2842/shared_invite/zt-25q8ve5lw-h0u_bLv3fh35iivgT1qkoQ) if you want your request approved more quickly.
+If allowable, you will receive GitHub access. We do not promise to share access to all requesters. Request from university researchers <b>must use their university email</b> to be approved.
+Please join the Slack group [Slack](https://join.slack.com/t/genesys-cyw2842/shared_invite/zt-25q8ve5lw-h0u_bLv3fh35iivgT1qkoQ) for questions and discussions.
 
 # Tandem Processor ASPLOS 2024 Benchmarks
 We have added detailed steps for you to recreate the benchmarks in the ASPLOS 2024 paper Tandem Processor: Grappling with Emerging Operators in Neural Networks [here](https://github.com/actlab-genesys/GeneSys/blob/main/benchmarks/README.md).
